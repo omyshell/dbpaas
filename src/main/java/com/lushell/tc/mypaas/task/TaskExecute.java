@@ -21,9 +21,6 @@ public class TaskExecute {
 
     private final int taskId;
     private final DbmetaManager dbm;
-    private String sshUser;
-    private String sshPsw;
-    private int sshPort;
 
     public TaskExecute(int taskId) {
         this.taskId = taskId;
@@ -72,18 +69,16 @@ public class TaskExecute {
         return master;
     }
 
-    public final List<ActionEnum> slaveAsync()
-    {
+    public final List<ActionEnum> slaveAsync() {
         List<ActionEnum> slave = new ArrayList<>();
         slave.add(ActionEnum.INSTALL_MYSQL_INSTANCE);
         slave.add(ActionEnum.INITALIZE_INSTANCE);
         slave.add(ActionEnum.ADD_SLAVE_TO_MASTER);
-        slave.add(ActionEnum.START_SLAVE);    
+        slave.add(ActionEnum.START_SLAVE);
         return slave;
     }
 
-    public final List<ActionEnum> slaveSemiSync()
-    {
+    public final List<ActionEnum> slaveSemiSync() {
         List<ActionEnum> slave = new ArrayList<>();
         slave.add(ActionEnum.INSTALL_MYSQL_INSTANCE);
         slave.add(ActionEnum.INITALIZE_INSTANCE);
@@ -95,69 +90,80 @@ public class TaskExecute {
     }
 
     public void run() {
-        if (dbm.init()) {
-            this.sshUser = dbm.getSshUser();
-            this.sshPsw = dbm.getSshPsw();
-        } else {
-            return;
-        }
 
         TaskStatus task = dbm.getTaskById(taskId);
         /**
          * We setup task_name if the new task.
          */
         if (task.getTaskName() == null) {
-             dbm.updateTaskName(taskId, ActionEnum.INSTALL_MYSQL_INSTANCE.getScript());
-             task.setTaskName(ActionEnum.INSTALL_MYSQL_INSTANCE.getScript());
+            dbm.updateTaskName(taskId, ActionEnum.INSTALL_MYSQL_INSTANCE.getScript());
+            task.setTaskName(ActionEnum.INSTALL_MYSQL_INSTANCE.getScript());
         }
 
-        if (TaskStatusConsts.RUNNING.equalsIgnoreCase(task.getStatus())) {
-            
-            ActionEnum action = ActionEnum.getBycript(task.getTaskName());
-            Worker checker = new Worker(task.getIp(), sshUser, sshPsw, sshPort,
-                    action.getCheckScript());
-            
-            checker.exec();
-            if (checker.getExitStatus() != 0) {
-                dbm.updateStatus(taskId, TaskStatusConsts.FAILED);
-                return;
-            }
+        String status = task.getStatus();
+        if (status == null) {
+            return;
+        }
 
-            if (action.getTimeout() > 0
-                    && action.getTimeout() > dbm.getTaskRunTime(taskId)) {
+        switch (status) {
+            case TaskStatusConsts.RUNNING:
+                ActionEnum action = ActionEnum.getBycript(task.getTaskName());
+                Worker checker = new Worker(task.getIp(), action.getCheckScript());
 
-                if (action.getOkStatus().equals(checker.getExitInfo())) {
-                    /**
-                     * task done.
-                     */
-                    dbm.updateStatus(taskId, TaskStatusConsts.SUCCESS);
-                    setNextOps();
+                checker.exec();
+                if (checker.getExitStatus() != 0) {
+                    dbm.updateStatus(taskId, TaskStatusConsts.FAILED);
+                    return;
                 }
-            } else {
-                // TIMEOUT we need kill the task.
-                //dbm.updateStatus(taskId, TaskStatusConsts.FAILED);
-            }
 
-        } else if (TaskStatusConsts.WAIT.equalsIgnoreCase(task.getStatus())) {
-            Worker worker = new Worker(task.getIp(), sshUser, sshPsw, sshPort, null);
-            /**
-             * update current task status and name.
-             */
-            if (!dbm.updateStatus(taskId, TaskStatusConsts.START)
-                    || !dbm.updateTaskBeginTime(taskId)) {
-                return;
-            }
-            worker.exec();
-            if (worker.getExitStatus() != 0) {
-                dbm.updateStatus(taskId, TaskStatusConsts.FAILED);
-                return;
-            }
-            dbm.updateStatus(taskId, TaskStatusConsts.RUNNING);
-        } else if (TaskStatusConsts.START.equalsIgnoreCase(task.getStatus()))
-        {
-            /**
-             * clean current step after status be setup WAIT.
-             */
+                if (action.getTimeout() > 0
+                        && action.getTimeout() > dbm.getTaskRunTime(taskId)) {
+
+                    if (action.getOkStatus().equals(checker.getExitInfo())) {
+                        /**
+                         * task done.
+                         */
+                        dbm.updateStatus(taskId, TaskStatusConsts.SUCCESS);
+                        setNextOps();
+                    }
+                } else {
+                // TIMEOUT we need kill the task.
+                    //dbm.updateStatus(taskId, TaskStatusConsts.FAILED);
+                }
+                break;
+            case TaskStatusConsts.WAIT:
+                Worker worker = new Worker(task.getIp(), null);
+                /**
+                 * update current task status and name.
+                 */
+                if (!dbm.updateStatus(taskId, TaskStatusConsts.START)
+                        || !dbm.updateTaskBeginTime(taskId)) {
+                    return;
+                }
+                worker.exec();
+                if (worker.getExitStatus() != 0) {
+                    dbm.updateStatus(taskId, TaskStatusConsts.FAILED);
+                    return;
+                }
+                dbm.updateStatus(taskId, TaskStatusConsts.RUNNING);
+
+                break;
+            case TaskStatusConsts.START:
+
+                /**
+                 * The reasons for this state is work be terminated. 
+                 * Clean this job site,  then se status WAIT.
+                 */
+                break;
+            case TaskStatusConsts.TIMEOUT:
+
+                /**
+                 * 1. kill this task. 2. clean job site. 3. terminate task.
+                 */
+                break;
+            default:
+                
+
         }
     }
 }

@@ -14,6 +14,7 @@ import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
+import com.lushell.tc.mypaas.configration.PropertyCache;
 
 /**
  *
@@ -22,18 +23,12 @@ import com.jcraft.jsch.Session;
 public class Worker {
 
     private final String host;
-    private final String user;
-    private final String psw;
-    private final int port;
     private String command;
     private int exitStatus;
     private String exitInfo;
 
-    public Worker(String host, String user, String psw, int port, String command) {
+    public Worker(String host, String command) {
         this.host = host;
-        this.user = user;
-        this.psw = psw;
-        this.port = port;
         this.command = command;
         this.exitStatus = 0;
         this.exitInfo = null;
@@ -45,11 +40,11 @@ public class Worker {
         ChannelExec openChannel = null;
         try {
             JSch jsch = new JSch();
-            session = jsch.getSession(user, host, port);
+            session = jsch.getSession(PropertyCache.getMysqlSshUser(), host, 22);
             java.util.Properties config = new java.util.Properties();
             config.put("StrictHostKeyChecking", "no");
             session.setConfig(config);
-            session.setPassword(psw);
+            session.setPassword(PropertyCache.getMysqlSshPsw());
             session.connect();
 
             openChannel = (ChannelExec) session.openChannel("exec");

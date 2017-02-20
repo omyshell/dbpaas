@@ -5,6 +5,7 @@
  */
 package com.lushell.tc.mypaas.meta;
 
+import com.lushell.tc.mypaas.configration.PropertyCache;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -18,16 +19,8 @@ import java.util.logging.Logger;
 public class DbmetaConnection {
 
     private Connection connection;
-    private final String user;
-    private final String psw;
-    private final String url;
 
     public DbmetaConnection() {
-        connection = null;
-        url = "jdbc:mysql://localhost:3307/dba_task_manager?zeroDateTimeBehavior"
-                + "=convertToNull&characterEncoding=utf8";
-        user = "epcc_dba";
-        psw = "123456";
     }
 
     public void closeConnection() {
@@ -43,10 +36,11 @@ public class DbmetaConnection {
     }
 
     public Connection getConnection() {
-        try {
+        try {    
             if (connection == null) {
                 Class.forName("com.mysql.jdbc.Driver");
-                connection = DriverManager.getConnection(url, user, psw);
+                connection = DriverManager.getConnection(PropertyCache.getUrl(),
+                        PropertyCache.getJdbcUser(), PropertyCache.getJdbcPsw());
             }
         } catch (ClassNotFoundException | SQLException ex) {
             Logger.getLogger(DbmetaManager.class.getName()).log(Level.SEVERE, null, ex);

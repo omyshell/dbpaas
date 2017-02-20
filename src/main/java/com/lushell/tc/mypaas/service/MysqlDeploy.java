@@ -5,6 +5,7 @@
  */
 package com.lushell.tc.mypaas.service;
 
+import com.lushell.tc.mypaas.configration.PropertyCache;
 import com.lushell.tc.mypaas.entity.TaskStatus;
 import com.lushell.tc.mypaas.executor.ThreadManager;
 import com.lushell.tc.mypaas.meta.DbmetaManager;
@@ -20,16 +21,13 @@ public class MysqlDeploy {
     public static boolean shutdown = false;
     /**
      * @param args the command line arguments
+     * @throws java.lang.InterruptedException
      */
     public static void main(String[] args) throws InterruptedException {
+        PropertyCache.getIstance();
         List<TaskStatus> waitTask = null;
         ThreadManager tm = new ThreadManager();
         DbmetaManager dba = new DbmetaManager();
-
-        if (!dba.init()) {
-            System.out.println("init failed.");
-            return;
-        }
 
         while (true) {
             waitTask = dba.getWaitTask();

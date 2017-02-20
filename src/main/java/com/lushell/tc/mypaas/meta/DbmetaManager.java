@@ -5,6 +5,7 @@
  */
 package com.lushell.tc.mypaas.meta;
 
+import com.lushell.tc.mypaas.configration.PropertyCache;
 import com.lushell.tc.mypaas.entity.TaskStatus;
 import com.lushell.tc.mypaas.utils.TaskStatusConsts;
 import java.sql.Connection;
@@ -23,52 +24,7 @@ import java.util.logging.Logger;
  */
 public class DbmetaManager {
 
-    private String sshUser;
-    private String sshPsw;
-
     public DbmetaManager() {
-    }
-
-    public String getSshUser() {
-        return sshUser;
-    }
-
-    public void setSshUser(String sshUser) {
-        this.sshUser = sshUser;
-    }
-
-    public String getSshPsw() {
-        return sshPsw;
-    }
-
-    public void setSshPsw(String sshPsw) {
-        this.sshPsw = sshPsw;
-    }
-
-    public boolean init() {
-        DbmetaConnection dbc = new DbmetaConnection();
-        try {
-            Connection connection = dbc.getConnection();
-            try (Statement stmt = connection.createStatement()) {
-                String sql = "SELECT config_value FROM default_config where config_name = 'dba_ssh_user'";
-                ResultSet rs = stmt.executeQuery(sql);
-                if (rs.next()) {
-                    sshUser = rs.getString("config_value");
-                }
-                rs.close();
-                sql = "SELECT config_value FROM default_config where config_name = 'dba_ssh_psw'";
-                rs = stmt.executeQuery(sql);
-                if (rs.next()) {
-                    sshPsw = rs.getString("config_value");
-                }
-            }
-            return true;
-        } catch (SQLException ex) {
-            Logger.getLogger(DbmetaManager.class.getName()).log(Level.SEVERE, null, ex);
-        } finally {
-            dbc.closeConnection();
-        }
-        return false;
     }
 
     public List<TaskStatus> getWaitTask() {
@@ -82,8 +38,6 @@ public class DbmetaManager {
                 try (ResultSet rs = stmt.executeQuery(sql)) {
                     while (rs.next()) {
                         TaskStatus waitTask = new TaskStatus();
-                        waitTask.setSshUser(sshUser);
-                        waitTask.setSshPsw(sshPsw);
                         waitTask.setTaskId(rs.getInt("task_id"));
                         waitTask.setIp(rs.getString("ip"));
                         waitTask.setPort(rs.getInt("port"));
