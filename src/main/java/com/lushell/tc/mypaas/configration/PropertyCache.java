@@ -26,6 +26,7 @@ public class PropertyCache {
     private static String jdbcUrl;
     private static String jdbcUser;
     private static String jdbcPsw;
+    private static String mysqlSrc;
 
     private PropertyCache() {
         try {
@@ -35,6 +36,7 @@ public class PropertyCache {
             PropertyCache.jdbcPsw = props.getProperty("task.jdbc.password");
             PropertyCache.sshMysqlUser = props.getProperty("task.mysql.user");
             PropertyCache.sshMysqlPsw = props.getProperty("task.mysql.password");
+            PropertyCache.mysqlSrc = props.getProperty("mysql.src.root");
         } catch (IOException ex) {
             Logger.getLogger(PropertyCache.class.getName())
                     .log(Level.SEVERE, null, ex);
@@ -73,5 +75,9 @@ public class PropertyCache {
 
     public static String getMysqlSshPsw() {
         return sshMysqlPsw;
+    }
+    
+    public static String getMysqlSrcPath() {
+        return mysqlSrc;
     }
 }

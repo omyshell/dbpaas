@@ -5,7 +5,6 @@
  */
 package com.lushell.tc.mypaas.meta;
 
-import com.lushell.tc.mypaas.configration.PropertyCache;
 import com.lushell.tc.mypaas.entity.TaskStatus;
 import com.lushell.tc.mypaas.utils.TaskStatusConsts;
 import java.sql.Connection;
@@ -32,23 +31,26 @@ public class DbmetaManager {
         try {
             Connection connection = dbc.getConnection();
             List<TaskStatus> waitTasks = new ArrayList<>();
-            try (Statement stmt = connection.createStatement()) {
-                String sql = "SELECT * FROM epcc_mysql_instance_task "
-                        + "where status = 'WAIT'";
-                try (ResultSet rs = stmt.executeQuery(sql)) {
-                    while (rs.next()) {
-                        TaskStatus waitTask = new TaskStatus();
-                        waitTask.setTaskId(rs.getInt("task_id"));
-                        waitTask.setIp(rs.getString("ip"));
-                        waitTask.setPort(rs.getInt("port"));
-                        waitTask.setDataSync(rs.getString("data_sync"));
-                        waitTask.setRole(rs.getString("role"));
-                        if (waitTask.getRole().equalsIgnoreCase("slave")) {
-                            waitTask.setMasterIp(rs.getString("master_ip"));
-                            waitTask.setMasterPort(rs.getInt("master_port"));
-                        }
-                        waitTasks.add(waitTask);
+            String sql = "SELECT * FROM epcc_mysql_instance_task "
+                    + "where (status != ? OR status !=  ?) AND task_ready = ?";
+            PreparedStatement pst = connection.prepareStatement(sql);
+            pst.setString(1, TaskStatusConsts.FAILED);
+            pst.setString(2, TaskStatusConsts.FINISHED);
+            pst.setInt(3, 1);
+
+            try (ResultSet rs = pst.executeQuery()) {
+                while (rs.next()) {
+                    TaskStatus waitTask = new TaskStatus();
+                    waitTask.setTaskId(rs.getInt("task_id"));
+                    waitTask.setIp(rs.getString("ip"));
+                    waitTask.setPort(rs.getInt("port"));
+                    waitTask.setDataSync(rs.getString("data_sync"));
+                    waitTask.setRole(rs.getString("role"));
+                    if (waitTask.getRole().equalsIgnoreCase("slave")) {
+                        waitTask.setMasterIp(rs.getString("master_ip"));
+                        waitTask.setMasterPort(rs.getInt("master_port"));
                     }
+                    waitTasks.add(waitTask);
                 }
             }
             return waitTasks;
@@ -71,12 +73,14 @@ public class DbmetaManager {
                     + "where task_id = ? and status != ?";
             pst = connection.prepareStatement(sql);
             pst.setInt(1, taskId);
-            pst.setString(2, TaskStatusConsts.FAILED);
+            pst.setString(2, TaskStatusConsts.FINISHED);
             rs = pst.executeQuery();
             if (rs.next()) {
-
                 task.setTaskId(rs.getInt("task_id"));
-                System.out.println(task.getTaskId());
+                task.setStatus(rs.getString("status"));
+                task.setTaskBeginTime(rs.getInt("task_begin_time"));
+                task.setTaskName(rs.getString("task_name"));
+                task.setTaskReady(rs.getString("task_ready"));
                 task.setIp(rs.getString("ip"));
                 task.setPort(rs.getInt("port"));
                 task.setDataSync(rs.getString("data_sync"));
@@ -136,6 +140,7 @@ public class DbmetaManager {
             pst.setInt(2, taskId);
             pst.executeUpdate();
             pst.close();
+            System.out.println("Change "+ taskId + " status " + status);
             return true;
         } catch (SQLException ex) {
             Logger.getLogger(DbmetaManager.class.getName()).log(Level.SEVERE, null, ex);

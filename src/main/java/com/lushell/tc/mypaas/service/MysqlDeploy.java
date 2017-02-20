@@ -24,7 +24,11 @@ public class MysqlDeploy {
      * @throws java.lang.InterruptedException
      */
     public static void main(String[] args) throws InterruptedException {
+        /**
+         * first we init server cache.
+         */
         PropertyCache.getIstance();
+        
         List<TaskStatus> waitTask = null;
         ThreadManager tm = new ThreadManager();
         DbmetaManager dba = new DbmetaManager();
@@ -34,10 +38,11 @@ public class MysqlDeploy {
             waitTask.stream().forEach((item) -> {
                 tm.submit(new TaskExecute(item.getTaskId()));
             });
+            
             if (shutdown) {
                 tm.shutdown();
             } else {
-                Thread.sleep(60 * 1000);
+                Thread.sleep(5 * 1000);
             }
         }
     }

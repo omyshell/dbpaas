@@ -39,6 +39,10 @@ public class TaskStatus  {
     private Integer masterPort;
 
     private String status;
+    
+    private String taskName;
+    
+    private String taskReady;
 
     private String exitStatus;
 
@@ -46,7 +50,7 @@ public class TaskStatus  {
 
     private Date createTime;
 
-    private Date taskBeginTime;
+    private int  taskBeginTime;
 
     private Date taskDoneTime;
 
@@ -58,7 +62,6 @@ public class TaskStatus  {
 
     private String sshPsw;
     
-    private String taskName;
 
     public TaskStatus()
     {
@@ -79,6 +82,22 @@ public class TaskStatus  {
         this.status = status;
         this.updateTime = updateTime;
         this.createTime = createTime;
+    }
+
+    public String getTaskReady() {
+        return taskReady;
+    }
+
+    public void setTaskReady(String taskReady) {
+        this.taskReady = taskReady;
+    }
+
+    public int getTaskBeginTime() {
+        return taskBeginTime;
+    }
+
+    public void setTaskBeginTime(int taskBeginTime) {
+        this.taskBeginTime = taskBeginTime;
     }
 
     public String getTaskName() {
@@ -215,14 +234,6 @@ public class TaskStatus  {
 
     public void setCreateTime(Date createTime) {
         this.createTime = createTime;
-    }
-
-    public Date getTaskBeginTime() {
-        return taskBeginTime;
-    }
-
-    public void setTaskBeginTime(Date taskBeginTime) {
-        this.taskBeginTime = taskBeginTime;
     }
 
     public Date getTaskDoneTime() {

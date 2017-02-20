@@ -5,6 +5,7 @@
  */
 package com.lushell.tc.mypaas.task;
 
+import com.lushell.tc.mypaas.configration.PropertyCache;
 import com.lushell.tc.mypaas.entity.TaskStatus;
 import com.lushell.tc.mypaas.meta.DbmetaManager;
 import com.lushell.tc.mypaas.utils.ActionEnum;
@@ -12,12 +13,16 @@ import com.lushell.tc.mypaas.utils.TaskStatusConsts;
 import com.lushell.tc.mypaas.utils.Worker;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
  * @author tangchao
  */
 public class TaskExecute {
+
+    private static final Logger logger = Logger.getLogger(TaskExecute.class.getName());
 
     private final int taskId;
     private final DbmetaManager dbm;
@@ -27,39 +32,51 @@ public class TaskExecute {
         dbm = new DbmetaManager();
     }
 
+    private ActionEnum getNextAction(String taskName, List<ActionEnum> jobs) {
+        ActionEnum action = null;
+        for (int i = 0; i < jobs.size(); i++) {
+            action = jobs.get(i);
+            if (action.getScript().equals(taskName)) {
+                i++;
+                if (i < jobs.size()) {
+                    action = jobs.get(i);
+                }
+            }
+        }
+        return action;
+    }
+
     private void setNextOps() {
         TaskStatus task = dbm.getTaskById(taskId);
         String taskName = task.getTaskName();
         ActionEnum action = null;
 
-        if ("master".equalsIgnoreCase(task.getRole())) {
-            List<ActionEnum> master = master();
-            for (int i = 0; i < master.size(); i++) {
-                action = master.get(i);
-                if (action.getScript().equals(taskName)) {
-                    i++;
-                    if (i < master.size()) {
-                        action = master.get(i);
-                    }
+        switch (task.getRole()) {
+            case "master":
+                action = getNextAction(taskName, master());
+                break;
+            case "slave":
+                if ("semiSync".equalsIgnoreCase(task.getDataSync())) {
+                    action = getNextAction(taskName, slaveSemiSync());
+                } else if ("async".equalsIgnoreCase(task.getDataSync())) {
+                    action = getNextAction(taskName, slaveAsync());
                 }
-            }
+                break;
+            default:
+                logger.log(Level.SEVERE, "unknow instance role, only master or slave.");
         }
 
-        if ("slave".equalsIgnoreCase(task.getRole())
-                && "semiSync".equalsIgnoreCase(task.getDataSync())) {
-            slaveSemiSync();
+        /**
+         * The workflow end, action be set null.
+         */
+        if (action == null) {
+            dbm.updateStatus(taskId, TaskStatusConsts.FINISHED);
+        } else {
+            dbm.updateTaskName(taskId, action.getCheckScript());
         }
-
-        if ("slave".equalsIgnoreCase(task.getRole())
-                && "async".equalsIgnoreCase(task.getDataSync())) {
-            slaveAsync();
-        }
-
-        dbm.updateTaskName(taskId, action.getScript());
-        dbm.updateStatus(taskId, TaskStatusConsts.WAIT);
     }
 
-    public final List<ActionEnum> master() {
+    private List<ActionEnum> master() {
         List<ActionEnum> master = new ArrayList<>();
         master.add(ActionEnum.INSTALL_MYSQL_INSTANCE);
         master.add(ActionEnum.INITALIZE_INSTANCE);
@@ -69,7 +86,7 @@ public class TaskExecute {
         return master;
     }
 
-    public final List<ActionEnum> slaveAsync() {
+    private List<ActionEnum> slaveAsync() {
         List<ActionEnum> slave = new ArrayList<>();
         slave.add(ActionEnum.INSTALL_MYSQL_INSTANCE);
         slave.add(ActionEnum.INITALIZE_INSTANCE);
@@ -78,7 +95,7 @@ public class TaskExecute {
         return slave;
     }
 
-    public final List<ActionEnum> slaveSemiSync() {
+    private List<ActionEnum> slaveSemiSync() {
         List<ActionEnum> slave = new ArrayList<>();
         slave.add(ActionEnum.INSTALL_MYSQL_INSTANCE);
         slave.add(ActionEnum.INITALIZE_INSTANCE);
@@ -89,8 +106,26 @@ public class TaskExecute {
         return slave;
     }
 
-    public void run() {
+    private String getRealExecCommand(TaskStatus task) {
+        String command = PropertyCache.getMysqlSrcPath();
+        String script = task.getTaskName();
+        ActionEnum action = ActionEnum.getBycript(script);
+        if (action.getTimeout() == 0) {
+            command = command + "./" + script;
+        } else {
+            command = command + " nohup ./" + script + " > ./log.txt";
+        }
+        return command;
+    }
 
+    private boolean isSyncTask(String taskName) {
+        return ActionEnum.getBycript(taskName).getTimeout() == 0;
+    }
+
+    public void run() {
+        ActionEnum action;
+        Worker worker;
+        Worker checker;
         TaskStatus task = dbm.getTaskById(taskId);
         /**
          * We setup task_name if the new task.
@@ -102,22 +137,35 @@ public class TaskExecute {
 
         String status = task.getStatus();
         if (status == null) {
+            System.err.println("status is null.");
             return;
         }
 
         switch (status) {
             case TaskStatusConsts.RUNNING:
-                ActionEnum action = ActionEnum.getBycript(task.getTaskName());
-                Worker checker = new Worker(task.getIp(), action.getCheckScript());
+                /**
+                 * block task.
+                 */
+                if (isSyncTask(task.getTaskName())) {
+                    dbm.updateStatus(taskId, TaskStatusConsts.SUCCESS);
+                    setNextOps();
+                    break;
+                }
+
+                /**
+                 * unblock task has a timeout set.
+                 */
+                action = ActionEnum.getBycript(task.getTaskName());
+                checker = new Worker(task.getIp(),
+                        PropertyCache.getMysqlSrcPath() + "./" + action.getCheckScript());
 
                 checker.exec();
                 if (checker.getExitStatus() != 0) {
                     dbm.updateStatus(taskId, TaskStatusConsts.FAILED);
-                    return;
+                    break;
                 }
 
-                if (action.getTimeout() > 0
-                        && action.getTimeout() > dbm.getTaskRunTime(taskId)) {
+                if (action.getTimeout() > dbm.getTaskRunTime(taskId)) {
 
                     if (action.getOkStatus().equals(checker.getExitInfo())) {
                         /**
@@ -127,43 +175,44 @@ public class TaskExecute {
                         setNextOps();
                     }
                 } else {
-                // TIMEOUT we need kill the task.
-                    //dbm.updateStatus(taskId, TaskStatusConsts.FAILED);
+                    dbm.updateStatus(taskId, TaskStatusConsts.TIMEOUT);
                 }
+
                 break;
+            case TaskStatusConsts.SUCCESS:
             case TaskStatusConsts.WAIT:
-                Worker worker = new Worker(task.getIp(), null);
+                worker = new Worker(task.getIp(), getRealExecCommand(task));
+
                 /**
-                 * update current task status and name.
+                 * update current task.
                  */
-                if (!dbm.updateStatus(taskId, TaskStatusConsts.START)
-                        || !dbm.updateTaskBeginTime(taskId)) {
-                    return;
+                if (!dbm.updateTaskBeginTime(taskId)) {
+                    break;
                 }
                 worker.exec();
                 if (worker.getExitStatus() != 0) {
                     dbm.updateStatus(taskId, TaskStatusConsts.FAILED);
-                    return;
+                    break;
                 }
                 dbm.updateStatus(taskId, TaskStatusConsts.RUNNING);
-
-                break;
-            case TaskStatusConsts.START:
-
-                /**
-                 * The reasons for this state is work be terminated. 
-                 * Clean this job site,  then se status WAIT.
-                 */
-                break;
             case TaskStatusConsts.TIMEOUT:
-
                 /**
                  * 1. kill this task. 2. clean job site. 3. terminate task.
                  */
+                System.err.println("set task TIMEOUT.");
+                break;
+            case TaskStatusConsts.FINISHED:
+                System.err.println("set task FINISHED.");
+                break;
+            case TaskStatusConsts.FAILED:
+                /**
+                 * start work from current pos.
+                 */
+                //task.setStatus(TaskStatusConsts.START);
+                //dbm.updateStatus(taskId, TaskStatusConsts.START);
                 break;
             default:
-                
-
+                logger.log(Level.SEVERE, status);
         }
     }
 }

@@ -30,6 +30,7 @@ public class Worker {
     public Worker(String host, String command) {
         this.host = host;
         this.command = command;
+        
         this.exitStatus = 0;
         this.exitInfo = null;
     }
@@ -50,7 +51,7 @@ public class Worker {
             openChannel = (ChannelExec) session.openChannel("exec");
             openChannel.setCommand(command);
             openChannel.connect();
-            System.out.print("["+command+"]");
+            System.out.println("["+command+"]");
             InputStream in = openChannel.getInputStream();
             BufferedReader reader = new BufferedReader(new InputStreamReader(in));
             String buf = null;
