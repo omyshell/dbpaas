@@ -12,6 +12,7 @@ import com.lushell.tc.mypaas.utils.ActionEnum;
 import com.lushell.tc.mypaas.utils.TaskStatusConsts;
 import com.lushell.tc.mypaas.utils.Worker;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -113,7 +114,7 @@ public class TaskExecute {
         if (action.getTimeout() == 0) {
             command = command + "./" + script;
         } else {
-            command = command + " nohup ./" + script + " > ./log.txt";
+            command = command + " nohup ./" + script + " > ./log.txt &";
         }
         return command;
     }
@@ -127,6 +128,10 @@ public class TaskExecute {
         Worker worker;
         Worker checker;
         TaskStatus task = dbm.getTaskById(taskId);
+        if (task == null) {
+            return;
+        }
+
         /**
          * We setup task_name if the new task.
          */
@@ -140,6 +145,7 @@ public class TaskExecute {
             System.err.println("status is null.");
             return;
         }
+        System.out.println(taskId + "=====" + status);
 
         switch (status) {
             case TaskStatusConsts.RUNNING:
@@ -147,7 +153,9 @@ public class TaskExecute {
                  * block task.
                  */
                 if (isSyncTask(task.getTaskName())) {
-                    dbm.updateStatus(taskId, TaskStatusConsts.SUCCESS);
+                    if (!dbm.updateStatus(taskId, TaskStatusConsts.SUCCESS)) {
+                        System.err.println("set sync task success failed.");
+                    }
                     setNextOps();
                     break;
                 }
@@ -161,9 +169,13 @@ public class TaskExecute {
 
                 checker.exec();
                 if (checker.getExitStatus() != 0) {
-                    dbm.updateStatus(taskId, TaskStatusConsts.FAILED);
+                    if (!dbm.updateStatus(taskId, TaskStatusConsts.FAILED)) {
+                        System.err.println("status running async task set failed failed.");
+                    }
                     break;
                 }
+                System.out.println("checker exit:" + checker.getExitInfo());
+                System.out.println("ok exit:" + action.getOkStatus());
 
                 if (action.getTimeout() > dbm.getTaskRunTime(taskId)) {
 
@@ -171,11 +183,15 @@ public class TaskExecute {
                         /**
                          * task done.
                          */
-                        dbm.updateStatus(taskId, TaskStatusConsts.SUCCESS);
+                        if (!dbm.updateStatus(taskId, TaskStatusConsts.SUCCESS)) {
+                            System.err.println("status running async task set success failed.");
+                        }
                         setNextOps();
                     }
                 } else {
-                    dbm.updateStatus(taskId, TaskStatusConsts.TIMEOUT);
+                    if (!dbm.updateStatus(taskId, TaskStatusConsts.TIMEOUT)) {
+                        System.err.println("status running async task set timeout failed.");
+                    }
                 }
 
                 break;
@@ -187,22 +203,28 @@ public class TaskExecute {
                  * update current task.
                  */
                 if (!dbm.updateTaskBeginTime(taskId)) {
+                    System.err.println("update task start time failed.");
                     break;
                 }
+                if (!dbm.updateStatus(taskId, TaskStatusConsts.RUNNING)) {
+                    System.err.println("set status running failed.");
+                }
+                System.out.println("exec1" + new Date());
                 worker.exec();
+                System.out.println("exec2" + new Date());
                 if (worker.getExitStatus() != 0) {
+                    System.err.println("worker.getExitStatus() " + worker.getExitStatus());
                     dbm.updateStatus(taskId, TaskStatusConsts.FAILED);
+                    System.err.println("execute worker failed.");
                     break;
                 }
-                dbm.updateStatus(taskId, TaskStatusConsts.RUNNING);
+
+                break;
             case TaskStatusConsts.TIMEOUT:
                 /**
                  * 1. kill this task. 2. clean job site. 3. terminate task.
                  */
                 System.err.println("set task TIMEOUT.");
-                break;
-            case TaskStatusConsts.FINISHED:
-                System.err.println("set task FINISHED.");
                 break;
             case TaskStatusConsts.FAILED:
                 /**

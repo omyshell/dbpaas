@@ -70,10 +70,11 @@ public class DbmetaManager {
         try {
             Connection connection = dbc.getConnection();
             String sql = "SELECT * FROM epcc_mysql_instance_task "
-                    + "where task_id = ? and status != ?";
+                    + "where task_id = ? and ( status != ? AND status != ?)";
             pst = connection.prepareStatement(sql);
             pst.setInt(1, taskId);
             pst.setString(2, TaskStatusConsts.FINISHED);
+            pst.setString(3, TaskStatusConsts.FAILED);
             rs = pst.executeQuery();
             if (rs.next()) {
                 task.setTaskId(rs.getInt("task_id"));
@@ -162,6 +163,7 @@ public class DbmetaManager {
             pst.setInt(2, taskId);
             pst.executeUpdate();
             pst.close();
+            System.out.println("Update task name:" + taskName);
             return true;
         } catch (SQLException ex) {
             Logger.getLogger(DbmetaManager.class.getName()).log(Level.SEVERE, null, ex);

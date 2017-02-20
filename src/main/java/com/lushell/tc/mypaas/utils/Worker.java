@@ -36,7 +36,7 @@ public class Worker {
     }
 
     public String exec() {
-        String result = "";
+        exitInfo = "";
         Session session = null;
         ChannelExec openChannel = null;
         try {
@@ -56,10 +56,10 @@ public class Worker {
             BufferedReader reader = new BufferedReader(new InputStreamReader(in));
             String buf = null;
             while ((buf = reader.readLine()) != null) {
-                result += new String(buf.getBytes("UTF-8"), "UTF-8");
+                exitInfo += new String(buf.getBytes("UTF-8"), "UTF-8");
             }
         } catch (JSchException | IOException e) {
-            result += e.getMessage();
+            exitInfo += e.getMessage();
         } finally {
             if (openChannel != null && !openChannel.isClosed()) {
                 openChannel.disconnect();
@@ -69,7 +69,7 @@ public class Worker {
                 session.disconnect();
             }
         }
-        return result;
+        return exitInfo;
     }
 
     public String getCommand() {

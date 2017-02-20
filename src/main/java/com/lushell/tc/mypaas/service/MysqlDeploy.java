@@ -38,12 +38,7 @@ public class MysqlDeploy {
             waitTask.stream().forEach((item) -> {
                 tm.submit(new TaskExecute(item.getTaskId()));
             });
-            
-            if (shutdown) {
-                tm.shutdown();
-            } else {
-                Thread.sleep(5 * 1000);
-            }
+            Thread.sleep(60 * 1000);
         }
     }
 }
