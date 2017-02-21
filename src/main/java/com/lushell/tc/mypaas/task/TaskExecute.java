@@ -77,7 +77,7 @@ public class TaskExecute {
                  */
                 if (isSyncTask(task.getTaskName())) {
                     if (!dbm.updateStatus(taskId, TaskStatusConsts.SUCCESS)) {
-                        System.err.println("set sync task success failed.");
+                        break;
                     }
                     action = PropertyCache.getNextAction(task);
                     if (action == null) {
@@ -90,6 +90,9 @@ public class TaskExecute {
 
                 /**
                  * unblock task has a timeout set.
+                 * ======IMPORTANT  TEERIBLE======
+                 * ASYNC TASK check exec running time over MAIN WHILE LOOP SLEEP,
+                 * task will probably hit bug. So keep check script lightter.
                  */
                 action = ActionEnum.getBycript(task.getTaskName());
                 checker = new Worker(task.getIp(),
