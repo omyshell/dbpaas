@@ -13,7 +13,7 @@ public enum ActionEnum {
 
     SPACE_ACTION("0", "0", "0", 0),
     /**
-     * action名，执行脚本，检查脚本，成功标志，超时时间(0表示同步)
+     * action name(script name)，check script，ok status，timeout
      */
     INSTALL_MYSQL_INSTANCE("epcc_instance_install.sh", "check_instance_install.sh", "INSTANCE_INSTALL_OK", 30 * 60),
     INITALIZE_INSTANCE("epcc_instance_init.sh", "check_instance_init.sh", "INSTANCE_INIT_OK", 10 * 60),
