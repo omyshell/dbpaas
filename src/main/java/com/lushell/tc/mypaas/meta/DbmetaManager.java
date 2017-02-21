@@ -32,7 +32,7 @@ public class DbmetaManager {
             Connection connection = dbc.getConnection();
             List<TaskStatus> waitTasks = new ArrayList<>();
             String sql = "SELECT task_id FROM epcc_mysql_instance_task "
-                    + "where (status != ? OR status !=  ?) AND task_ready = ?";
+                    + "where status not in( ? ,  ?) AND task_ready = ?";
             PreparedStatement pst = connection.prepareStatement(sql);
             pst.setString(1, TaskStatusConsts.FAILED);
             pst.setString(2, TaskStatusConsts.FINISHED);
@@ -62,7 +62,7 @@ public class DbmetaManager {
         try {
             Connection connection = dbc.getConnection();
             String sql = "SELECT * FROM epcc_mysql_instance_task "
-                    + "where task_id = ? and ( status != ? AND status != ?)";
+                    + "where task_id = ? and status not in( ? , ?)";
             pst = connection.prepareStatement(sql);
             pst.setInt(1, taskId);
             pst.setString(2, TaskStatusConsts.FINISHED);

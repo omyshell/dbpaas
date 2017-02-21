@@ -166,7 +166,7 @@ public class TaskExecute {
                 //dbm.updateStatus(taskId, TaskStatusConsts.START);
                 break;
             default:
-                logger.log(Level.SEVERE, status);
+                System.err.println("return error status" + status);
         }
     }
 }
