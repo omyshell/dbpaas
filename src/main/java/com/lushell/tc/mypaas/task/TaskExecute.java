@@ -11,9 +11,7 @@ import com.lushell.tc.mypaas.meta.DbmetaManager;
 import com.lushell.tc.mypaas.utils.ActionEnum;
 import com.lushell.tc.mypaas.utils.TaskStatusConsts;
 import com.lushell.tc.mypaas.utils.Worker;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -33,94 +31,20 @@ public class TaskExecute {
         dbm = new DbmetaManager();
     }
 
-    private ActionEnum getNextAction(String taskName, List<ActionEnum> jobs) {
-        ActionEnum action = null;
-        for (int i = 0; i < jobs.size(); i++) {
-            action = jobs.get(i);
-            if (action.getScript().equals(taskName)) {
-                i++;
-                if (i < jobs.size()) {
-                    action = jobs.get(i);
-                }
-            }
-        }
-        return action;
-    }
-
-    private void setNextOps() {
-        TaskStatus task = dbm.getTaskById(taskId);
-        String taskName = task.getTaskName();
-        ActionEnum action = null;
-
-        switch (task.getRole()) {
-            case "master":
-                action = getNextAction(taskName, master());
-                break;
-            case "slave":
-                if ("semiSync".equalsIgnoreCase(task.getDataSync())) {
-                    action = getNextAction(taskName, slaveSemiSync());
-                } else if ("async".equalsIgnoreCase(task.getDataSync())) {
-                    action = getNextAction(taskName, slaveAsync());
-                }
-                break;
-            default:
-                logger.log(Level.SEVERE, "unknow instance role, only master or slave.");
-        }
-
-        /**
-         * The workflow end, action be set null.
-         */
-        if (action == null) {
-            dbm.updateStatus(taskId, TaskStatusConsts.FINISHED);
-        } else {
-            dbm.updateTaskName(taskId, action.getCheckScript());
-        }
-    }
-
-    private List<ActionEnum> master() {
-        List<ActionEnum> master = new ArrayList<>();
-        master.add(ActionEnum.INSTALL_MYSQL_INSTANCE);
-        master.add(ActionEnum.INITALIZE_INSTANCE);
-        master.add(ActionEnum.INSTALL_MASTER_SEMI_SYNC);
-        master.add(ActionEnum.SET_MASTER_SEMI_SYNC_ON);
-        master.add(ActionEnum.INITALIZE_SYSTEM_USER);
-        return master;
-    }
-
-    private List<ActionEnum> slaveAsync() {
-        List<ActionEnum> slave = new ArrayList<>();
-        slave.add(ActionEnum.INSTALL_MYSQL_INSTANCE);
-        slave.add(ActionEnum.INITALIZE_INSTANCE);
-        slave.add(ActionEnum.ADD_SLAVE_TO_MASTER);
-        slave.add(ActionEnum.START_SLAVE);
-        return slave;
-    }
-
-    private List<ActionEnum> slaveSemiSync() {
-        List<ActionEnum> slave = new ArrayList<>();
-        slave.add(ActionEnum.INSTALL_MYSQL_INSTANCE);
-        slave.add(ActionEnum.INITALIZE_INSTANCE);
-        slave.add(ActionEnum.ADD_SLAVE_TO_MASTER);
-        slave.add(ActionEnum.INSTALL_SLAVE_SEMI_SYNC);
-        slave.add(ActionEnum.SET_SLAVE_SEMI_SYNC_ON);
-        slave.add(ActionEnum.START_SLAVE);
-        return slave;
-    }
-
     private String getRealExecCommand(TaskStatus task) {
         String command = PropertyCache.getMysqlSrcPath();
         String script = task.getTaskName();
         ActionEnum action = ActionEnum.getBycript(script);
-        if (action.getTimeout() == 0) {
+        if (action.isSyncTask()) {
             command = command + "./" + script;
         } else {
-            command = command + " nohup ./" + script + " > ./log.txt &";
+            command = command + " nohup /bin/bash " + script + " &";
         }
         return command;
     }
 
     private boolean isSyncTask(String taskName) {
-        return ActionEnum.getBycript(taskName).getTimeout() == 0;
+        return ActionEnum.getBycript(taskName).isSyncTask();
     }
 
     public void run() {
@@ -156,7 +80,12 @@ public class TaskExecute {
                     if (!dbm.updateStatus(taskId, TaskStatusConsts.SUCCESS)) {
                         System.err.println("set sync task success failed.");
                     }
-                    setNextOps();
+                    action = PropertyCache.getNextAction(task);
+                    if (action == null) {
+                        dbm.updateStatus(taskId, TaskStatusConsts.FINISHED);
+                    } else {
+                        dbm.updateTaskName(taskId, action.getCheckScript());
+                    }
                     break;
                 }
 
@@ -185,8 +114,14 @@ public class TaskExecute {
                          */
                         if (!dbm.updateStatus(taskId, TaskStatusConsts.SUCCESS)) {
                             System.err.println("status running async task set success failed.");
+                            break;
                         }
-                        setNextOps();
+                        action = PropertyCache.getNextAction(task);
+                        if (action == null) {
+                            dbm.updateStatus(taskId, TaskStatusConsts.FINISHED);
+                        } else {
+                            dbm.updateTaskName(taskId, action.getScript());
+                        }
                     }
                 } else {
                     if (!dbm.updateStatus(taskId, TaskStatusConsts.TIMEOUT)) {
@@ -208,6 +143,7 @@ public class TaskExecute {
                 }
                 if (!dbm.updateStatus(taskId, TaskStatusConsts.RUNNING)) {
                     System.err.println("set status running failed.");
+                    break;
                 }
                 System.out.println("exec1" + new Date());
                 worker.exec();

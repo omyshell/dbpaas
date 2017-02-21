@@ -52,6 +52,7 @@ public class Worker {
             openChannel.setCommand(command);
             openChannel.connect();
             System.out.println("["+command+"]");
+            
             InputStream in = openChannel.getInputStream();
             BufferedReader reader = new BufferedReader(new InputStreamReader(in));
             String buf = null;

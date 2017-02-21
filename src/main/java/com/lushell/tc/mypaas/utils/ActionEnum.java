@@ -5,6 +5,11 @@
  */
 package com.lushell.tc.mypaas.utils;
 
+import com.lushell.tc.mypaas.configration.PropertyCache;
+import com.lushell.tc.mypaas.entity.TaskStatus;
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  *
  * @author tangchao
@@ -68,4 +73,10 @@ public enum ActionEnum {
         }
         return null;
     }
+
+    public boolean isSyncTask() {
+        return timeout == 0;
+    }
 }
+
+

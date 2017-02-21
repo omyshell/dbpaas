@@ -139,9 +139,12 @@ public class DbmetaManager {
             pst = connection.prepareStatement(sql);
             pst.setString(1, status);
             pst.setInt(2, taskId);
-            pst.executeUpdate();
+            int executeUpdate = pst.executeUpdate();
             pst.close();
-            System.out.println("Change "+ taskId + " status " + status);
+            System.out.println("Change " + taskId + " status " + status);
+            if (executeUpdate == 0) {
+                return false;
+            }
             return true;
         } catch (SQLException ex) {
             Logger.getLogger(DbmetaManager.class.getName()).log(Level.SEVERE, null, ex);
@@ -161,9 +164,12 @@ public class DbmetaManager {
             pst = connection.prepareStatement(sql);
             pst.setString(1, taskName);
             pst.setInt(2, taskId);
-            pst.executeUpdate();
+            int executeUpdate = pst.executeUpdate();
             pst.close();
             System.out.println("Update task name:" + taskName);
+            if (executeUpdate == 0) {
+                return false;
+            }
             return true;
         } catch (SQLException ex) {
             Logger.getLogger(DbmetaManager.class.getName()).log(Level.SEVERE, null, ex);
