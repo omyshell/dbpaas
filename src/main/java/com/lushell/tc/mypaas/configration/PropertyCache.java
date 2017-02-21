@@ -157,8 +157,6 @@ public class PropertyCache {
                 action = jobs.get(pos);
             }
         }
-        System.out.println(pos + "Setup local action:"
-                + action == null ? "null" : action.getScript());
         return action;
     }
 
