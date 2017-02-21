@@ -17,6 +17,7 @@ import java.util.logging.Logger;
 
 /**
  * Properties file, very important.
+ *
  * @author tangchao
  */
 public class PropertyCache {
@@ -31,7 +32,7 @@ public class PropertyCache {
     private static String jdbcUser;
     private static String jdbcPsw;
     private static String mysqlSrc;
-    
+
     private static List<ActionEnum> masterJobListBySemiSync;
     private static List<ActionEnum> slaveJobListBySemiSync;
     private static List<ActionEnum> slaveJobListByAsync;
@@ -101,7 +102,7 @@ public class PropertyCache {
     public static String getMysqlSshPsw() {
         return sshMysqlPsw;
     }
-    
+
     public static String getMysqlSrcPath() {
         return mysqlSrc;
     }
@@ -110,9 +111,10 @@ public class PropertyCache {
         List<ActionEnum> master = new ArrayList<>();
         master.add(ActionEnum.INSTALL_MYSQL_INSTANCE);
         master.add(ActionEnum.INITALIZE_INSTANCE);
+        master.add(ActionEnum.START_INSTANCE);
+        master.add(ActionEnum.INITALIZE_SYSTEM_USER);
         master.add(ActionEnum.INSTALL_MASTER_SEMI_SYNC);
         master.add(ActionEnum.SET_MASTER_SEMI_SYNC_ON);
-        master.add(ActionEnum.INITALIZE_SYSTEM_USER);
         return master;
     }
 
@@ -120,6 +122,7 @@ public class PropertyCache {
         List<ActionEnum> slave = new ArrayList<>();
         slave.add(ActionEnum.INSTALL_MYSQL_INSTANCE);
         slave.add(ActionEnum.INITALIZE_INSTANCE);
+        slave.add(ActionEnum.START_INSTANCE);
         slave.add(ActionEnum.ADD_SLAVE_TO_MASTER);
         slave.add(ActionEnum.START_SLAVE);
         return slave;
@@ -129,13 +132,14 @@ public class PropertyCache {
         List<ActionEnum> slave = new ArrayList<>();
         slave.add(ActionEnum.INSTALL_MYSQL_INSTANCE);
         slave.add(ActionEnum.INITALIZE_INSTANCE);
+        slave.add(ActionEnum.START_INSTANCE);
         slave.add(ActionEnum.ADD_SLAVE_TO_MASTER);
         slave.add(ActionEnum.INSTALL_SLAVE_SEMI_SYNC);
         slave.add(ActionEnum.SET_SLAVE_SEMI_SYNC_ON);
         slave.add(ActionEnum.START_SLAVE);
         return slave;
     }
-    
+
     private static ActionEnum getNextAction(String taskName, List<ActionEnum> jobs) {
         int pos = 0;
         boolean iftask = false;
@@ -145,7 +149,7 @@ public class PropertyCache {
                 break;
             }
         }
-        
+
         ActionEnum action = null;
         if (iftask) {
             pos++;
@@ -153,7 +157,7 @@ public class PropertyCache {
                 action = jobs.get(pos);
             }
         }
-        System.out.println(pos + "Setup action:" 
+        System.out.println(pos + "Setup action:"
                 + action == null ? "null" : action.getScript());
         return action;
     }
@@ -177,6 +181,6 @@ public class PropertyCache {
                 System.err.println("unknow instance role, only master or slave.");
         }
 
-         return getNextAction(taskName, jobList);
+        return getNextAction(taskName, jobList);
     }
 }
