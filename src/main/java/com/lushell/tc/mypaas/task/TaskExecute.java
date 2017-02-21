@@ -83,7 +83,7 @@ public class TaskExecute {
                     if (action == null) {
                         dbm.updateStatus(taskId, TaskStatusConsts.FINISHED);
                     } else {
-                        dbm.updateTaskName(taskId, action.getCheckScript());
+                        dbm.updateTaskName(taskId, action.getScript());
                     }
                     break;
                 }
