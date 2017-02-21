@@ -142,9 +142,8 @@ public class TaskExecute {
                     System.err.println("set status running failed.");
                     break;
                 }
-                System.out.println("exec1" + new Date());
+
                 worker.exec();
-                System.out.println("exec2" + new Date());
                 if (worker.getExitStatus() != 0) {
                     System.err.println("worker.getExitStatus() " + worker.getExitStatus());
                     dbm.updateStatus(taskId, TaskStatusConsts.FAILED);
