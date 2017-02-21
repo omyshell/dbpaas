@@ -31,7 +31,7 @@ public class DbmetaManager {
         try {
             Connection connection = dbc.getConnection();
             List<TaskStatus> waitTasks = new ArrayList<>();
-            String sql = "SELECT * FROM epcc_mysql_instance_task "
+            String sql = "SELECT task_id FROM epcc_mysql_instance_task "
                     + "where (status != ? OR status !=  ?) AND task_ready = ?";
             PreparedStatement pst = connection.prepareStatement(sql);
             pst.setString(1, TaskStatusConsts.FAILED);
@@ -42,14 +42,6 @@ public class DbmetaManager {
                 while (rs.next()) {
                     TaskStatus waitTask = new TaskStatus();
                     waitTask.setTaskId(rs.getInt("task_id"));
-                    waitTask.setIp(rs.getString("ip"));
-                    waitTask.setPort(rs.getInt("port"));
-                    waitTask.setDataSync(rs.getString("data_sync"));
-                    waitTask.setRole(rs.getString("role"));
-                    if (waitTask.getRole().equalsIgnoreCase("slave")) {
-                        waitTask.setMasterIp(rs.getString("master_ip"));
-                        waitTask.setMasterPort(rs.getInt("master_port"));
-                    }
                     waitTasks.add(waitTask);
                 }
             }

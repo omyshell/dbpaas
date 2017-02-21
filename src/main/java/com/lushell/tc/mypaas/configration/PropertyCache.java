@@ -137,17 +137,24 @@ public class PropertyCache {
     }
     
     private static ActionEnum getNextAction(String taskName, List<ActionEnum> jobs) {
-        ActionEnum action = null;
-        for (int i = 0; i < jobs.size(); i++) {
-            action = jobs.get(i);
-            if (action.getScript().equals(taskName)) {
-                i++;
-                if (i < jobs.size()) {
-                    action = jobs.get(i);
-                    System.out.println("Setup action:" + action.getScript());
-                }
+        int pos = 0;
+        boolean iftask = false;
+        for (; pos < jobs.size(); pos++) {
+            if (jobs.get(pos).getScript().equals(taskName)) {
+                iftask = true;
+                break;
             }
         }
+        
+        ActionEnum action = null;
+        if (iftask) {
+            pos++;
+            if (pos < jobs.size()) {
+                action = jobs.get(pos);
+            }
+        }
+        System.out.println(pos + "Setup action:" 
+                + action == null ? "null" : action.getScript());
         return action;
     }
 

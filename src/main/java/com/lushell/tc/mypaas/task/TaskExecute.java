@@ -24,11 +24,9 @@ public class TaskExecute {
     private static final Logger logger = Logger.getLogger(TaskExecute.class.getName());
 
     private final int taskId;
-    private final DbmetaManager dbm;
 
     public TaskExecute(int taskId) {
         this.taskId = taskId;
-        dbm = new DbmetaManager();
     }
 
     private String getRealExecCommand(TaskStatus task) {
@@ -51,6 +49,7 @@ public class TaskExecute {
         ActionEnum action;
         Worker worker;
         Worker checker;
+        final DbmetaManager dbm = new DbmetaManager();
         TaskStatus task = dbm.getTaskById(taskId);
         if (task == null) {
             return;
@@ -103,8 +102,6 @@ public class TaskExecute {
                     }
                     break;
                 }
-                System.out.println("checker exit:" + checker.getExitInfo());
-                System.out.println("ok exit:" + action.getOkStatus());
 
                 if (action.getTimeout() > dbm.getTaskRunTime(taskId)) {
 
