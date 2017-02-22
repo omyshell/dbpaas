@@ -108,7 +108,7 @@ public class DbmetaManager {
             pst.setInt(1, taskId);
             rs = pst.executeQuery();
             if (rs.next()) {
-                rs.getInt(1);
+                runTime= rs.getInt(1);
             }
             pst.close();
             rs.close();
@@ -119,6 +119,34 @@ public class DbmetaManager {
             dbc.closeConnection();
         }
         return runTime;
+    }
+
+    public boolean isFinished(String ip, int port) {
+        ResultSet rs = null;
+        PreparedStatement pst = null;
+        String sql = null;
+        String status = "";
+        DbmetaConnection dbc = new DbmetaConnection();
+        try {
+            Connection connection = dbc.getConnection();
+            sql = "SELECT status FROM epcc_mysql_instance_task "
+                    + "WHERE ip = ? AND port = ?";
+            pst = connection.prepareStatement(sql);
+            pst.setString(1, ip);
+            pst.setInt(1, port);
+            rs = pst.executeQuery();
+            if (rs.next()) {
+                status = rs.getString(1);
+            }
+            pst.close();
+            rs.close();
+            return status.equalsIgnoreCase(TaskStatusConsts.FINISHED);
+        } catch (SQLException ex) {
+            Logger.getLogger(DbmetaManager.class.getName()).log(Level.SEVERE, null, ex);
+        } finally {
+            dbc.closeConnection();
+        }
+        return false;
     }
 
     public boolean updateStatus(int taskId, String status) {

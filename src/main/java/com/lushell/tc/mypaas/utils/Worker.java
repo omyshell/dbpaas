@@ -51,7 +51,7 @@ public class Worker {
             openChannel = (ChannelExec) session.openChannel("exec");
             openChannel.setCommand(command);
             openChannel.connect();
-            //System.out.println("["+command+"]");
+            System.out.println("["+command+"]");
             
             InputStream in = openChannel.getInputStream();
             BufferedReader reader = new BufferedReader(new InputStreamReader(in));

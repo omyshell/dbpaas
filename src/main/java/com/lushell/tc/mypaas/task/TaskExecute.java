@@ -35,10 +35,10 @@ public class TaskExecute {
         if (action.equals(action.ADD_SLAVE_TO_MASTER)) {
             slave = slave + " 1 " + task.getMasterIp() + " " + task.getMasterPort();
         }
-        if (action.isSyncTask()) {
-            command = command + "./" + script + slave;
-        } else {
-            command = command + " nohup /bin/bash " + script + slave + " &";
+        
+        command = command + "./" + script + slave;
+        if (!action.isSyncTask()) {
+            command = command + " >/dev/null 2>&1 &";
         }
 
         return command;
@@ -153,6 +153,7 @@ public class TaskExecute {
                 }
 
                 worker.exec();
+
                 if (worker.getExitStatus() != 0) {
                     System.err.println("worker.getExitStatus() " + worker.getExitStatus());
                     dbm.updateStatus(taskId, TaskStatusConsts.FAILED);
