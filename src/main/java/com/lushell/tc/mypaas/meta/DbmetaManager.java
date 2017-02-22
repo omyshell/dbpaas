@@ -133,7 +133,7 @@ public class DbmetaManager {
             pst.setInt(2, taskId);
             int executeUpdate = pst.executeUpdate();
             pst.close();
-            System.out.println("Change " + taskId + " status " + status);
+            //System.out.println("Change " + taskId + " status " + status);
             if (executeUpdate == 0) {
                 return false;
             }
@@ -158,7 +158,7 @@ public class DbmetaManager {
             pst.setInt(2, taskId);
             int executeUpdate = pst.executeUpdate();
             pst.close();
-            System.out.println("Update task name:" + taskName);
+            //System.out.println("Update task name:" + taskName);
             if (executeUpdate == 0) {
                 return false;
             }

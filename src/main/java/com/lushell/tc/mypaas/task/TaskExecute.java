@@ -71,7 +71,8 @@ public class TaskExecute {
             System.err.println("status is null.");
             return;
         }
-        System.out.println(taskId + "=====" + status);
+        System.out.println("==Task ID " + taskId + " " + task.getTaskName()
+                + " " + status);
 
         switch (status) {
             case TaskStatusConsts.RUNNING:
