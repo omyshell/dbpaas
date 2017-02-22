@@ -16,7 +16,7 @@ import java.util.List;
  *
  * @author tangchao
  */
-public class MysqlDeploy {
+public class DeployService {
 
     public static boolean shutdown = false;
     /**
