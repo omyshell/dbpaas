@@ -11,8 +11,6 @@ import com.lushell.tc.mypaas.meta.DbmetaManager;
 import com.lushell.tc.mypaas.utils.ActionEnum;
 import com.lushell.tc.mypaas.utils.TaskStatusConsts;
 import com.lushell.tc.mypaas.utils.Worker;
-import java.util.Date;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -33,11 +31,16 @@ public class TaskExecute {
         String command = PropertyCache.getMysqlSrcPath();
         String script = task.getTaskName();
         ActionEnum action = ActionEnum.getBycript(script);
-        if (action.isSyncTask()) {
-            command = command + "./" + script;
-        } else {
-            command = command + " nohup /bin/bash " + script + " &";
+        String slave = " ";
+        if (action.equals(action.ADD_SLAVE_TO_MASTER)) {
+            slave = slave + " 1 " + task.getMasterIp() + " " + task.getMasterPort();
         }
+        if (action.isSyncTask()) {
+            command = command + "./" + script + slave;
+        } else {
+            command = command + " nohup /bin/bash " + script + slave + " &";
+        }
+
         return command;
     }
 
@@ -100,8 +103,10 @@ public class TaskExecute {
 
                 checker.exec();
                 if (checker.getExitStatus() != 0) {
+                     System.out.println("exec=" + checker.getExitStatus());
+                     System.out.println("exec=" + checker.getExitInfo());
                     if (!dbm.updateStatus(taskId, TaskStatusConsts.FAILED)) {
-                        System.err.println("status running async task set failed failed.");
+                        System.out.println("status running async task set failed failed.");
                     }
                     break;
                 }
@@ -113,7 +118,7 @@ public class TaskExecute {
                          * task done.
                          */
                         if (!dbm.updateStatus(taskId, TaskStatusConsts.SUCCESS)) {
-                            System.err.println("status running async task set success failed.");
+                            System.out.println("status running async task set success failed.");
                             break;
                         }
                         action = PropertyCache.getNextAction(task);
@@ -138,11 +143,11 @@ public class TaskExecute {
                  * update current task.
                  */
                 if (!dbm.updateTaskBeginTime(taskId)) {
-                    System.err.println("update task start time failed.");
+                    System.out.println("update task start time failed.");
                     break;
                 }
                 if (!dbm.updateStatus(taskId, TaskStatusConsts.RUNNING)) {
-                    System.err.println("set status running failed.");
+                    System.out.println("set status running failed.");
                     break;
                 }
 
