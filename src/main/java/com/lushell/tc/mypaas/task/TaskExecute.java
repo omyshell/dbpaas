@@ -170,10 +170,8 @@ public class TaskExecute {
                 break;
             case TaskStatusConsts.FAILED:
                 /**
-                 * start work from current pos.
+                 * Restart work from current position, record retry count.
                  */
-                //task.setStatus(TaskStatusConsts.START);
-                //dbm.updateStatus(taskId, TaskStatusConsts.START);
                 break;
             default:
                 System.err.println("return error status" + status);
