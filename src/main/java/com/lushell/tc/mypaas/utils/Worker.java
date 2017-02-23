@@ -23,14 +23,13 @@ import com.lushell.tc.mypaas.configration.PropertyCache;
 public class Worker {
 
     private final String host;
-    private String command;
+    private final String command;
     private int exitStatus;
     private String exitInfo;
 
     public Worker(String host, String command) {
         this.host = host;
         this.command = command;
-        
         this.exitStatus = 0;
         this.exitInfo = null;
     }
@@ -51,11 +50,10 @@ public class Worker {
             openChannel = (ChannelExec) session.openChannel("exec");
             openChannel.setCommand(command);
             openChannel.connect();
-            //System.out.println("["+command+"]");
-            
+
             InputStream in = openChannel.getInputStream();
             BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-            String buf = null;
+            String buf;
             while ((buf = reader.readLine()) != null) {
                 exitInfo += new String(buf.getBytes("UTF-8"), "UTF-8");
             }
@@ -77,24 +75,11 @@ public class Worker {
         return command;
     }
 
-    public void setCommand(String command) {
-        this.command = command;
-    }
-
     public int getExitStatus() {
         return exitStatus;
-    }
-
-    public void setExitStatus(int exitStatus) {
-        this.exitStatus = exitStatus;
     }
 
     public String getExitInfo() {
         return exitInfo;
     }
-
-    public void setExitInfo(String exitInfo) {
-        this.exitInfo = exitInfo;
-    }
-
 }
