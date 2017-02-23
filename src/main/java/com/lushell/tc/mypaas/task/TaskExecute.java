@@ -19,7 +19,7 @@ import java.util.logging.Logger;
  */
 public class TaskExecute {
 
-    private static final Logger logger = Logger.getLogger(TaskExecute.class.getName());
+    private static final Logger LOG = Logger.getLogger(TaskExecute.class.getName());
 
     private final int taskId;
 
@@ -32,7 +32,7 @@ public class TaskExecute {
         String script = task.getTaskName();
         ActionEnum action = ActionEnum.getBycript(script);
         String slave = " ";
-        if (action.equals(action.ADD_SLAVE_TO_MASTER)) {
+        if (action.equals(ActionEnum.ADD_SLAVE_TO_MASTER)) {
             slave = slave + " 1 " + task.getMasterIp() + " " + task.getMasterPort();
         }
         

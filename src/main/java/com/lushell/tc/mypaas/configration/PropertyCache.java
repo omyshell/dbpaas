@@ -22,9 +22,11 @@ import java.util.logging.Logger;
  */
 public class PropertyCache {
 
-    private static final String server = "/etc/server.properties";
+    private static volatile PropertyCache cache;
 
-    private static final Properties props = new Properties();
+    private static final String SERVER_FILE = "/etc/server.properties";
+
+    private static final Properties PROPS = new Properties();
 
     private static String sshMysqlUser;
     private static String sshMysqlPsw;
@@ -39,13 +41,13 @@ public class PropertyCache {
 
     private PropertyCache() {
         try {
-            props.load(new FileInputStream(server));
-            PropertyCache.jdbcUrl = props.getProperty("task.jdbc.url");
-            PropertyCache.jdbcUser = props.getProperty("task.jdbc.user");
-            PropertyCache.jdbcPsw = props.getProperty("task.jdbc.password");
-            PropertyCache.sshMysqlUser = props.getProperty("task.mysql.user");
-            PropertyCache.sshMysqlPsw = props.getProperty("task.mysql.password");
-            PropertyCache.mysqlSrc = props.getProperty("mysql.src.root");
+            PROPS.load(new FileInputStream(SERVER_FILE));
+            PropertyCache.jdbcUrl = PROPS.getProperty("task.jdbc.url");
+            PropertyCache.jdbcUser = PROPS.getProperty("task.jdbc.user");
+            PropertyCache.jdbcPsw = PROPS.getProperty("task.jdbc.password");
+            PropertyCache.sshMysqlUser = PROPS.getProperty("task.mysql.user");
+            PropertyCache.sshMysqlPsw = PROPS.getProperty("task.mysql.password");
+            PropertyCache.mysqlSrc = PROPS.getProperty("mysql.src.root");
 
             PropertyCache.masterJobListBySemiSync = master();
             PropertyCache.slaveJobListByAsync = slaveAsync();
@@ -58,17 +60,16 @@ public class PropertyCache {
         }
     }
 
-    private static volatile PropertyCache instance;
 
     public static PropertyCache getIstance() {
-        if (instance == null) {
+        if (cache == null) {
             synchronized (PropertyCache.class) {
-                if (instance == null) {
-                    instance = new PropertyCache();
+                if (cache == null) {
+                    cache = new PropertyCache();
                 }
             }
         }
-        return instance;
+        return cache;
     }
 
     public static List<ActionEnum> getMasterJobListBySemiSync() {
