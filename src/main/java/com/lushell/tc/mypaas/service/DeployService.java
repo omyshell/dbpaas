@@ -28,11 +28,9 @@ public class DeployService {
          * first we init server cache.
          */
         PropertyCache.getIstance();
-        
-        List<TaskStatus> waitTask = null;
-        ThreadManager tm = new ThreadManager();
+        List<TaskStatus> waitTask;
         DbmetaManager dba = new DbmetaManager();
-
+        ThreadManager tm = new ThreadManager();
         while (true) {
             waitTask = dba.getWaitTask();
             waitTask.stream().forEach((item) -> {

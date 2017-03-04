@@ -34,6 +34,9 @@ public class PropertyCache {
     private static String jdbcUser;
     private static String jdbcPsw;
     private static String mysqlSrc;
+    
+    private static int threadMin;
+    private static int threadMax;
 
     private static List<ActionEnum> masterJobListBySemiSync;
     private static List<ActionEnum> slaveJobListBySemiSync;
@@ -48,6 +51,8 @@ public class PropertyCache {
             PropertyCache.sshMysqlUser = PROPS.getProperty("task.mysql.user");
             PropertyCache.sshMysqlPsw = PROPS.getProperty("task.mysql.password");
             PropertyCache.mysqlSrc = PROPS.getProperty("mysql.src.root");
+            PropertyCache.threadMin = Integer.parseInt(PROPS.getProperty("workflow.thread.min"));
+            PropertyCache.threadMax = Integer.parseInt(PROPS.getProperty("workflow.thread.max"));
 
             PropertyCache.masterJobListBySemiSync = master();
             PropertyCache.slaveJobListByAsync = slaveAsync();
@@ -105,6 +110,14 @@ public class PropertyCache {
 
     public static String getMysqlSrcPath() {
         return mysqlSrc;
+    }
+
+    public static int getThreadMin() {
+        return threadMin;
+    }
+
+    public static int getThreadMax() {
+        return threadMax;
     }
 
     private static List<ActionEnum> master() {
