@@ -60,7 +60,6 @@ public class PropertyCache {
         }
     }
 
-
     public static PropertyCache getIstance() {
         if (cache == null) {
             synchronized (PropertyCache.class) {
