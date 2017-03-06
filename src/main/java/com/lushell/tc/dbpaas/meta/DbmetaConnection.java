@@ -3,9 +3,9 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.lushell.tc.mypaas.meta;
+package com.lushell.tc.dbpaas.meta;
 
-import com.lushell.tc.mypaas.configration.PropertyCache;
+import com.lushell.tc.dbpaas.configration.PropertyCache;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;

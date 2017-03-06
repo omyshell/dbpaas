@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.lushell.tc.mypaas.utils;
+package com.lushell.tc.dbpaas.utils;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -14,7 +14,7 @@ import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
-import com.lushell.tc.mypaas.configration.PropertyCache;
+import com.lushell.tc.dbpaas.configration.PropertyCache;
 
 /**
  *

@@ -3,10 +3,10 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.lushell.tc.mypaas.meta;
+package com.lushell.tc.dbpaas.meta;
 
-import com.lushell.tc.mypaas.entity.TaskStatus;
-import com.lushell.tc.mypaas.utils.TaskStatusConsts;
+import com.lushell.tc.dbpaas.entity.TaskStatus;
+import com.lushell.tc.dbpaas.utils.TaskStatusConsts;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;

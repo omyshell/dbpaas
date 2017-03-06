@@ -3,10 +3,10 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.lushell.tc.mypaas.configration;
+package com.lushell.tc.dbpaas.configration;
 
-import com.lushell.tc.mypaas.entity.TaskStatus;
-import com.lushell.tc.mypaas.utils.ActionEnum;
+import com.lushell.tc.dbpaas.entity.TaskStatus;
+import com.lushell.tc.dbpaas.utils.ActionEnum;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;

@@ -3,10 +3,10 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.lushell.tc.mypaas.executor;
+package com.lushell.tc.dbpaas.executor;
 
-import com.lushell.tc.mypaas.configration.PropertyCache;
-import com.lushell.tc.mypaas.task.TaskExecute;
+import com.lushell.tc.dbpaas.configration.PropertyCache;
+import com.lushell.tc.dbpaas.task.TaskExecute;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 

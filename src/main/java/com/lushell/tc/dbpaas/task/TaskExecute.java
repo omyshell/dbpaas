@@ -3,14 +3,14 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.lushell.tc.mypaas.task;
+package com.lushell.tc.dbpaas.task;
 
-import com.lushell.tc.mypaas.configration.PropertyCache;
-import com.lushell.tc.mypaas.entity.TaskStatus;
-import com.lushell.tc.mypaas.meta.DbmetaManager;
-import com.lushell.tc.mypaas.utils.ActionEnum;
-import com.lushell.tc.mypaas.utils.TaskStatusConsts;
-import com.lushell.tc.mypaas.utils.Worker;
+import com.lushell.tc.dbpaas.configration.PropertyCache;
+import com.lushell.tc.dbpaas.entity.TaskStatus;
+import com.lushell.tc.dbpaas.meta.DbmetaManager;
+import com.lushell.tc.dbpaas.utils.ActionEnum;
+import com.lushell.tc.dbpaas.utils.TaskStatusConsts;
+import com.lushell.tc.dbpaas.utils.Worker;
 import java.util.logging.Logger;
 
 /**
