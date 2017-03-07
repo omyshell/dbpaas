@@ -32,7 +32,7 @@ public class DbmetaManager {
             Connection connection = dbc.getConnection();
             List<TaskStatus> waitTasks = new ArrayList<>();
             String sql = "SELECT task_id FROM epcc_mysql_instance_task "
-                    + "where status not in( ? ,  ?) AND task_ready = ?";
+                    + "WHERE status NOT IN( ? ,  ?) AND task_ready = ?";
             PreparedStatement pst = connection.prepareStatement(sql);
             pst.setString(1, TaskStatusConsts.FAILED);
             pst.setString(2, TaskStatusConsts.FINISHED);
@@ -62,7 +62,7 @@ public class DbmetaManager {
         try {
             Connection connection = dbc.getConnection();
             String sql = "SELECT * FROM epcc_mysql_instance_task "
-                    + "where task_id = ? and status not in( ? , ?)";
+                    + "WHERE task_id = ? AND status NOT IN( ? , ?)";
             pst = connection.prepareStatement(sql);
             pst.setInt(1, taskId);
             pst.setString(2, TaskStatusConsts.FINISHED);
@@ -155,7 +155,7 @@ public class DbmetaManager {
         DbmetaConnection dbc = new DbmetaConnection();
         try {
             Connection connection = dbc.getConnection();
-            sql = "update epcc_mysql_instance_task set status = ? where task_id = ?";
+            sql = "UPDATE epcc_mysql_instance_task SET status = ? WHERE task_id = ?";
             pst = connection.prepareStatement(sql);
             pst.setString(1, status);
             pst.setInt(2, taskId);
@@ -180,7 +180,7 @@ public class DbmetaManager {
         DbmetaConnection dbc = new DbmetaConnection();
         try {
             Connection connection = dbc.getConnection();
-            sql = "update epcc_mysql_instance_task set task_name = ? where task_id = ?";
+            sql = "UPDATE epcc_mysql_instance_task SET task_name = ? WHERE task_id = ?";
             pst = connection.prepareStatement(sql);
             pst.setString(1, taskName);
             pst.setInt(2, taskId);
@@ -205,7 +205,7 @@ public class DbmetaManager {
         DbmetaConnection dbc = new DbmetaConnection();
         try {
             Connection connection = dbc.getConnection();
-            sql = "update epcc_mysql_instance_task set task_begin_time = UNIX_TIMESTAMP() "
+            sql = "UPDATE epcc_mysql_instance_task SET task_begin_time = UNIX_TIMESTAMP() "
                     + "where task_id = ?";
             pst = connection.prepareStatement(sql);
             pst.setInt(1, taskId);
