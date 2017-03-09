@@ -59,6 +59,7 @@ public class Worker {
             }
         } catch (JSchException | IOException e) {
             exitInfo += e.getMessage();
+            System.err.println("SSH ERROR==>>" + exitInfo);
         } finally {
             if (openChannel != null && !openChannel.isClosed()) {
                 openChannel.disconnect();
