@@ -43,7 +43,7 @@
                         <manifest>
                             <addClasspath>true</addClasspath>
                             <classpathPrefix>lib/</classpathPrefix>
-                            <mainClass>com.lushell.tc.installation.service.DeployService</mainClass>
+                            <mainClass>com.lushell.tc.dbpaas.service.DeployService</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
