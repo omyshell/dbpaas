@@ -104,10 +104,8 @@ public class TaskExecute {
 
                 checker.exec();
                 if (checker.getExitStatus() != 0) {
-                     System.out.println("exec=" + checker.getExitStatus());
-                     System.out.println("exec=" + checker.getExitInfo());
                     if (!dbm.updateStatus(taskId, TaskStatusConsts.FAILED)) {
-                        System.out.println("status running async task set failed failed.");
+                        System.err.println("status RUNNING [async task] set FAILED failed.");
                     }
                     break;
                 }
@@ -155,9 +153,7 @@ public class TaskExecute {
                 worker.exec();
 
                 if (worker.getExitStatus() != 0) {
-                    System.err.println("worker.getExitStatus() " + worker.getExitStatus());
                     dbm.updateStatus(taskId, TaskStatusConsts.FAILED);
-                    System.err.println("execute worker failed.");
                     break;
                 }
 
@@ -166,7 +162,8 @@ public class TaskExecute {
                 /**
                  * 1. kill this task. 2. clean job site. 3. terminate task.
                  */
-                System.err.println("set task TIMEOUT.");
+                System.err.println("TASK TIMEOUT.");
+                dbm.updateStatus(taskId, TaskStatusConsts.FAILED);
                 break;
             case TaskStatusConsts.FAILED:
                 /**

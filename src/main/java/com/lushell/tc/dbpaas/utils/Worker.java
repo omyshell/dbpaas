@@ -64,6 +64,9 @@ public class Worker {
             if (openChannel != null && !openChannel.isClosed()) {
                 openChannel.disconnect();
                 exitStatus = openChannel.getExitStatus();
+                if (exitStatus != 0) {
+                    System.err.println("Close channel error " + exitStatus);
+                }
             }
             if (session != null && session.isConnected()) {
                 session.disconnect();
