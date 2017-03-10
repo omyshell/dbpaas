@@ -36,7 +36,7 @@ public class DeployService {
             waitTask.stream().forEach((item) -> {
                 tm.submit(new TaskExecute(item.getTaskId()));
             });
-            Thread.sleep(100);
+            Thread.sleep(1000);
         }
     }
 }

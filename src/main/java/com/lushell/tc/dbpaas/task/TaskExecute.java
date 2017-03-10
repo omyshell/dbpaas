@@ -36,9 +36,9 @@ public class TaskExecute {
             slave = slave + " 1 " + task.getMasterIp() + " " + task.getMasterPort();
         }
         
-        command = command + "./" + script + slave;
+        command = command + " ./" + script + slave;
         if (!action.isSyncTask()) {
-            command = command + " >/dev/null 2>&1 &";
+            command = command + " >/dev/null 2>&1 & ";
         }
 
         return command;

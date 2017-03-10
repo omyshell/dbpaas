@@ -15,6 +15,7 @@ import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 import com.lushell.tc.dbpaas.configration.PropertyCache;
+import java.util.Arrays;
 
 /**
  *
@@ -48,11 +49,11 @@ public class Worker {
             session.connect();
 
             channel = (ChannelExec) session.openChannel("exec");
-            ((ChannelExec)channel).setCommand(command);
+            ((ChannelExec) channel).setCommand(command);
             InputStream in = channel.getInputStream();
             ((ChannelExec) channel).setErrStream(System.err);
             channel.connect();
-            
+
             byte[] tmp = new byte[1024];
             while (true) {
                 while (in.available() > 0) {
@@ -70,18 +71,20 @@ public class Worker {
                     exitStatus = channel.getExitStatus();
                     break;
                 }
+                
                 try {
                     Thread.sleep(1000);
                 } catch (Exception e) {
                 }
+               
             }
-            
+            System.err.println(exitInfo);
             channel.disconnect();
             session.disconnect();
         } catch (JSchException | IOException e) {
             exitInfo += e.getMessage();
             System.err.println("SSH ERROR==>>" + exitInfo);
-        } 
+        }
         return exitInfo;
     }
 
