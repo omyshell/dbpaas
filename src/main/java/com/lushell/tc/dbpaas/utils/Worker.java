@@ -5,17 +5,16 @@
  */
 package com.lushell.tc.dbpaas.utils;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 
 import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 import com.lushell.tc.dbpaas.configration.PropertyCache;
-import java.util.Arrays;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 
 /**
  *
@@ -53,32 +52,14 @@ public class Worker {
             InputStream in = channel.getInputStream();
             ((ChannelExec) channel).setErrStream(System.err);
             channel.connect();
+            exitStatus = channel.getExitStatus();
+            System.out.println(exitStatus);
 
-            byte[] tmp = new byte[1024];
-            while (true) {
-                while (in.available() > 0) {
-                    int i = in.read(tmp, 0, 1024);
-                    if (i < 0) {
-                        break;
-                    }
-                    exitInfo += new String(tmp, 0, i);
-                }
-                if (channel.isClosed()) {
-                    if (in.available() > 0) {
-                        continue;
-                    }
-                    System.out.println("exit-status: " + channel.getExitStatus());
-                    exitStatus = channel.getExitStatus();
-                    break;
-                }
-                
-                try {
-                    Thread.sleep(1000);
-                } catch (Exception e) {
-                }
-               
+            BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+            String buf = null;
+            while ((buf = reader.readLine()) != null) {
+                exitInfo += " " + buf;
             }
-            System.err.println(exitInfo);
             channel.disconnect();
             session.disconnect();
         } catch (JSchException | IOException e) {
