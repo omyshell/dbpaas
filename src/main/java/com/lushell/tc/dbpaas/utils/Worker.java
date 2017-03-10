@@ -37,7 +37,7 @@ public class Worker {
     public String exec() {
         exitInfo = "";
         Session session = null;
-        ChannelExec openChannel = null;
+        ChannelExec channel = null;
         try {
             JSch jsch = new JSch();
             session = jsch.getSession(PropertyCache.getMysqlSshUser(), host, 22);
@@ -47,31 +47,41 @@ public class Worker {
             session.setPassword(PropertyCache.getMysqlSshPsw());
             session.connect();
 
-            openChannel = (ChannelExec) session.openChannel("exec");
-            openChannel.setCommand(command);
-            openChannel.connect();
-
-            InputStream in = openChannel.getInputStream();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-            String buf;
-            while ((buf = reader.readLine()) != null) {
-                exitInfo += new String(buf.getBytes("UTF-8"), "UTF-8");
+            channel = (ChannelExec) session.openChannel("exec");
+            ((ChannelExec)channel).setCommand(command);
+            InputStream in = channel.getInputStream();
+            ((ChannelExec) channel).setErrStream(System.err);
+            channel.connect();
+            
+            byte[] tmp = new byte[1024];
+            while (true) {
+                while (in.available() > 0) {
+                    int i = in.read(tmp, 0, 1024);
+                    if (i < 0) {
+                        break;
+                    }
+                    exitInfo += new String(tmp, 0, i);
+                }
+                if (channel.isClosed()) {
+                    if (in.available() > 0) {
+                        continue;
+                    }
+                    System.out.println("exit-status: " + channel.getExitStatus());
+                    exitStatus = channel.getExitStatus();
+                    break;
+                }
+                try {
+                    Thread.sleep(1000);
+                } catch (Exception e) {
+                }
             }
+            
+            channel.disconnect();
+            session.disconnect();
         } catch (JSchException | IOException e) {
             exitInfo += e.getMessage();
             System.err.println("SSH ERROR==>>" + exitInfo);
-        } finally {
-            if (openChannel != null && !openChannel.isClosed()) {
-                openChannel.disconnect();
-                exitStatus = openChannel.getExitStatus();
-                if (exitStatus != 0) {
-                    System.err.println("Close channel error " + exitStatus);
-                }
-            }
-            if (session != null && session.isConnected()) {
-                session.disconnect();
-            }
-        }
+        } 
         return exitInfo;
     }
 
