@@ -74,6 +74,17 @@ public class TaskExecute implements Runnable {
                     }
                     break;
                 case TaskStatusConsts.SUCCESS:
+                    if (isSyncTask(task.getTaskName())) {
+                        action = PropertyCache.getNextAction(task);
+                        if (action == null) {
+                            dbm.setTaskStatus(taskId, TaskStatusConsts.FINISHED);
+                        } else {
+                            dbm.setTaskName(taskId, action.getScript());
+                            dbm.setTaskStatus(taskId, TaskStatusConsts.RUNNING);
+                        }
+                        break;
+                    }
+
                     action = ActionEnum.getBycript(task.getTaskName());
                     checker = new Worker(task.getIp(), PropertyCache.getMysqlSrcPath()
                             + " ./" + action.getCheckScript());
