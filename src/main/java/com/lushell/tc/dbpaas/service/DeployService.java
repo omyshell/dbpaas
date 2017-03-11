@@ -24,6 +24,7 @@ public class DeployService {
     /**
      * @param args the command line arguments
      * NO LINUX DEAMON AGENT RUNNING，SO EXEC(command) WILL BLOCKING UNTIL END.
+     * ONE TASK PER THREAD
      */
     public static void main(String[] args) {
         /**
@@ -42,8 +43,9 @@ public class DeployService {
         ThreadManager pool = new ThreadManager();
 
         while (true) {
+            
             List<TaskStatus> readyTask = dba.getReadyTask();
-            /*
+            
             if (readyTask == null || readyTask.isEmpty()) {
                 sleepTime += 10;
                 if (sleepTime > 900) {
@@ -53,7 +55,7 @@ public class DeployService {
             } else {
                 sleepTime = T;
             }
-            */
+            
             readyTask.stream().forEach((task) -> {
                 Integer taskId = task.getTaskId();
                 dba.setTaskStatus(taskId, TaskStatusConsts.WAITING);
@@ -61,11 +63,11 @@ public class DeployService {
                 //te.run();
                 pool.submit(te);
             });
-/*
+
             try {
                 Thread.sleep(sleepTime * 1000);
             } catch (InterruptedException ex) {
-            }*/
+            }
         }
     }
 }

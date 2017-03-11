@@ -54,10 +54,10 @@ public class TaskExecute implements Runnable {
         Worker checker;
         String status;
         TaskStatus task;
-        
+
         final DbmetaManager dbm = new DbmetaManager();
-        
-        for (int i = 0;i<99;i++) {
+
+        for (int i = 0;i<100;i++) {
            task = dbm.getTaskById(taskId);
             if (task.getTaskReady() == 0) {
                 break;
@@ -76,9 +76,9 @@ public class TaskExecute implements Runnable {
                 case TaskStatusConsts.SUCCESS:
                     action = ActionEnum.getBycript(task.getTaskName());
                     checker = new Worker(task.getIp(), PropertyCache.getMysqlSrcPath()
-                            + " /bin/bash " + action.getCheckScript());
-                    if (checker.exec() == 0
-                            && action.getOkStatus().equals(checker.getExitInfo())) {
+                            + " ./" + action.getCheckScript());
+                    checker.exec();
+                    if (action.getOkStatus().equals(checker.getExitInfo())) {
                         action = PropertyCache.getNextAction(task);
                         if (action == null) {
                             dbm.setTaskStatus(taskId, TaskStatusConsts.FINISHED);
@@ -102,6 +102,7 @@ public class TaskExecute implements Runnable {
                     dbm.setTaskTready(taskId, 0);
                     break;
                 case TaskStatusConsts.FAILED:
+                    System.err.println(taskId + " FAILED");
                     dbm.setTaskTready(taskId, 0);
                     break;
                 default:

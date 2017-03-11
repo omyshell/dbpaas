@@ -46,12 +46,11 @@ public class Worker {
             session.setConfig(config);
             session.setPassword(PropertyCache.getMysqlSshPsw());
             session.connect();
-
+            
             channel = (ChannelExec) session.openChannel("exec");
             ((ChannelExec) channel).setCommand(command);
-            
+            System.out.println("[" + command + "]");
             channel.setInputStream(null);
-            ((ChannelExec)channel).setErrStream(System.err);
             InputStream in = channel.getInputStream();
             channel.connect();
 
@@ -60,10 +59,9 @@ public class Worker {
             while ((buf = reader.readLine()) != null) {
                 String line = new String(buf.getBytes("UTF-8"), "UTF-8");
                 exitInfo += line;
-                System.out.println(channel.getExitStatus() + line);
             }
             exitStatus = channel.getExitStatus();
-            System.out.println("exit Status " + exitStatus + " [" + command + "]" + exitInfo);
+            System.out.println("exit Status " + exitStatus + " " + exitInfo);
             channel.disconnect();
             session.disconnect();
             return exitStatus;
