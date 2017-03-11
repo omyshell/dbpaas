@@ -38,7 +38,7 @@ public class TaskExecute {
         
         command = command + " ./" + script + slave;
         if (!action.isSyncTask()) {
-            command = command + " >/dev/null 2>&1 & ";
+            command = command + " >/dev/null 2>&1  &";
         }
 
         return command;
@@ -68,7 +68,6 @@ public class TaskExecute {
 
         String status = task.getStatus();
         if (status == null) {
-            System.err.println("status is null.");
             return;
         }
         System.out.println("==Task ID " + taskId + " " + task.getTaskName()
@@ -100,7 +99,7 @@ public class TaskExecute {
                  */
                 action = ActionEnum.getBycript(task.getTaskName());
                 checker = new Worker(task.getIp(),
-                        PropertyCache.getMysqlSrcPath() + "./" + action.getCheckScript());
+                        PropertyCache.getMysqlSrcPath() + "/bin/bash " + action.getCheckScript());
 
                 checker.exec();
                 if (checker.getExitStatus() != 0) {

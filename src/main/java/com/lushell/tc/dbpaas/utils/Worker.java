@@ -36,8 +36,8 @@ public class Worker {
 
     public String exec() {
         exitInfo = "";
-        Session session = null;
-        ChannelExec channel = null;
+        Session session;
+        ChannelExec channel;
         try {
             JSch jsch = new JSch();
             session = jsch.getSession(PropertyCache.getMysqlSshUser(), host, 22);
@@ -49,28 +49,26 @@ public class Worker {
 
             channel = (ChannelExec) session.openChannel("exec");
             ((ChannelExec) channel).setCommand(command);
-            InputStream in = channel.getInputStream();
-            ((ChannelExec) channel).setErrStream(System.err);
-            channel.connect();
-            exitStatus = channel.getExitStatus();
-            System.out.println(exitStatus);
 
+            //((ChannelExec) channel).setErrStream(System.err);
+            channel.connect();
+
+                        InputStream in = channel.getInputStream();
             BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-            String buf = null;
+            String buf;
             while ((buf = reader.readLine()) != null) {
-                exitInfo += " " + buf;
+                 exitInfo += new String(buf.getBytes("UTF-8"), "UTF-8");
             }
+            exitStatus = channel.getExitStatus();
+            System.out.println("exie Status " + exitStatus + " [" + command + "]" + exitInfo);
             channel.disconnect();
             session.disconnect();
         } catch (JSchException | IOException e) {
             exitInfo += e.getMessage();
             System.err.println("SSH ERROR==>>" + exitInfo);
+            exitStatus = 2;
         }
         return exitInfo;
-    }
-
-    public String getCommand() {
-        return command;
     }
 
     public int getExitStatus() {
