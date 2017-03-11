@@ -24,7 +24,7 @@ public class PropertyCache {
 
     private static volatile PropertyCache cache;
 
-    private static final String SERVER_FILE = "/etc/server.properties";
+    private static final String SERVER_FILE = "C:\\server.properties";
 
     private static final Properties PROPS = new Properties();
 

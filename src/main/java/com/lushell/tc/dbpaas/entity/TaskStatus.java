@@ -42,7 +42,7 @@ public class TaskStatus  {
     
     private String taskName;
     
-    private String taskReady;
+    private int taskReady;
 
     private String exitStatus;
 
@@ -84,11 +84,11 @@ public class TaskStatus  {
         this.createTime = createTime;
     }
 
-    public String getTaskReady() {
+    public int getTaskReady() {
         return taskReady;
     }
 
-    public void setTaskReady(String taskReady) {
+    public void setTaskReady(int taskReady) {
         this.taskReady = taskReady;
     }
 

@@ -23,7 +23,7 @@ public class ThreadManager {
 
     public void submit(TaskExecute task) {
         pool.execute(() -> {
-                   task.run();
+                   task.execute();
         });
     }
 

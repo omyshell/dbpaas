@@ -17,7 +17,7 @@ import java.util.logging.Logger;
  *
  * @author tangchao
  */
-public class TaskExecute {
+public class TaskExecute implements Runnable {
 
     private static final Logger LOG = Logger.getLogger(TaskExecute.class.getName());
 
@@ -38,7 +38,7 @@ public class TaskExecute {
         
         command = command + " ./" + script + slave;
         if (!action.isSyncTask()) {
-            command = command + " >/dev/null 2>&1  &";
+            command = command + " >/dev/null 2>&1 &";
         }
 
         return command;
@@ -48,129 +48,70 @@ public class TaskExecute {
         return ActionEnum.getBycript(taskName).isSyncTask();
     }
 
-    public void run() {
+    public void execute() {
         ActionEnum action;
         Worker worker;
         Worker checker;
+        String status;
+        TaskStatus task;
+        
         final DbmetaManager dbm = new DbmetaManager();
-        TaskStatus task = dbm.getTaskById(taskId);
-        if (task == null) {
-            return;
-        }
-
-        /**
-         * We setup task_name if the new task.
-         */
-        if (task.getTaskName() == null) {
-            dbm.updateTaskName(taskId, ActionEnum.INSTALL_MYSQL_INSTANCE.getScript());
-            task.setTaskName(ActionEnum.INSTALL_MYSQL_INSTANCE.getScript());
-        }
-
-        String status = task.getStatus();
-        if (status == null) {
-            return;
-        }
-        System.out.println("==Task ID " + taskId + " " + task.getTaskName()
-                + " " + status);
-
-        switch (status) {
-            case TaskStatusConsts.RUNNING:
-                /**
-                 * block task.
-                 */
-                if (isSyncTask(task.getTaskName())) {
-                    if (!dbm.updateStatus(taskId, TaskStatusConsts.SUCCESS)) {
-                        break;
-                    }
-                    action = PropertyCache.getNextAction(task);
-                    if (action == null) {
-                        dbm.updateStatus(taskId, TaskStatusConsts.FINISHED);
+        
+        for (int i = 0;i<99;i++) {
+           task = dbm.getTaskById(taskId);
+            if (task.getTaskReady() == 0) {
+                break;
+            }
+            status = task.getStatus();
+            System.out.println("==Task ID " + taskId + " " + task.getTaskName() + " " + status);
+            switch (status) {
+                case TaskStatusConsts.RUNNING:
+                    worker = new Worker(task.getIp(), getRealExecCommand(task));
+                    if (worker.exec() != 0) {
+                        dbm.setTaskStatus(taskId, TaskStatusConsts.FAILED);
                     } else {
-                        dbm.updateTaskName(taskId, action.getScript());
+                        dbm.setTaskStatus(taskId, TaskStatusConsts.SUCCESS);
                     }
                     break;
-                }
-
-                /**
-                 * unblock task has a timeout set.
-                 * ======IMPORTANT  TEERIBLE======
-                 * ASYNC TASK check exec running time over MAIN WHILE LOOP SLEEP,
-                 * task will probably hit bug. So keep check script lightter.
-                 */
-                action = ActionEnum.getBycript(task.getTaskName());
-                checker = new Worker(task.getIp(),
-                        PropertyCache.getMysqlSrcPath() + "/bin/bash " + action.getCheckScript());
-
-                checker.exec();
-                if (checker.getExitStatus() != 0) {
-                    if (!dbm.updateStatus(taskId, TaskStatusConsts.FAILED)) {
-                        System.err.println("status RUNNING [async task] set FAILED failed.");
-                    }
-                    break;
-                }
-
-                if (action.getTimeout() > dbm.getTaskRunTime(taskId)) {
-
-                    if (action.getOkStatus().equals(checker.getExitInfo())) {
-                        /**
-                         * task done.
-                         */
-                        if (!dbm.updateStatus(taskId, TaskStatusConsts.SUCCESS)) {
-                            System.out.println("status running async task set success failed.");
-                            break;
-                        }
+                case TaskStatusConsts.SUCCESS:
+                    action = ActionEnum.getBycript(task.getTaskName());
+                    checker = new Worker(task.getIp(), PropertyCache.getMysqlSrcPath()
+                            + " /bin/bash " + action.getCheckScript());
+                    if (checker.exec() == 0
+                            && action.getOkStatus().equals(checker.getExitInfo())) {
                         action = PropertyCache.getNextAction(task);
                         if (action == null) {
-                            dbm.updateStatus(taskId, TaskStatusConsts.FINISHED);
+                            dbm.setTaskStatus(taskId, TaskStatusConsts.FINISHED);
                         } else {
-                            dbm.updateTaskName(taskId, action.getScript());
+                            dbm.setTaskName(taskId, action.getScript());
+                            dbm.setTaskStatus(taskId, TaskStatusConsts.RUNNING);
                         }
+                    } else {
+                        dbm.setTaskStatus(taskId, TaskStatusConsts.FAILED);
                     }
-                } else {
-                    if (!dbm.updateStatus(taskId, TaskStatusConsts.TIMEOUT)) {
-                        System.err.println("status running async task set timeout failed.");
-                    }
-                }
-
-                break;
-            case TaskStatusConsts.SUCCESS:
-            case TaskStatusConsts.WAIT:
-                worker = new Worker(task.getIp(), getRealExecCommand(task));
-
-                /**
-                 * update current task.
-                 */
-                if (!dbm.updateTaskBeginTime(taskId)) {
-                    System.out.println("update task start time failed.");
                     break;
-                }
-                if (!dbm.updateStatus(taskId, TaskStatusConsts.RUNNING)) {
-                    System.out.println("set status running failed.");
+                case TaskStatusConsts.WAITING:
+                    /**
+                     * Initialize task, setup status and start name.
+                     */
+                    dbm.setTaskName(taskId, ActionEnum.INSTALL_MYSQL_INSTANCE.getScript());
+                    dbm.setTaskStatus(taskId, TaskStatusConsts.RUNNING);
                     break;
-                }
-
-                worker.exec();
-
-                if (worker.getExitStatus() != 0) {
-                    dbm.updateStatus(taskId, TaskStatusConsts.FAILED);
+                case TaskStatusConsts.FINISHED:
+                    dbm.setTaskName(taskId, "DONE");
+                    dbm.setTaskTready(taskId, 0);
                     break;
-                }
-
-                break;
-            case TaskStatusConsts.TIMEOUT:
-                /**
-                 * 1. kill this task. 2. clean job site. 3. terminate task.
-                 */
-                System.err.println("TASK TIMEOUT.");
-                dbm.updateStatus(taskId, TaskStatusConsts.FAILED);
-                break;
-            case TaskStatusConsts.FAILED:
-                /**
-                 * Restart work from current position, record retry count.
-                 */
-                break;
-            default:
-                System.err.println("return error status" + status);
+                case TaskStatusConsts.FAILED:
+                    dbm.setTaskTready(taskId, 0);
+                    break;
+                default:
+                    System.err.println("return error status" + status);
+            }
         }
+    }
+
+    @Override
+    public void run() {
+        execute();
     }
 }

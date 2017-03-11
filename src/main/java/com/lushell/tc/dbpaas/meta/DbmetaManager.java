@@ -26,17 +26,16 @@ public class DbmetaManager {
     public DbmetaManager() {
     }
 
-    public List<TaskStatus> getWaitTask() {
+    public List<TaskStatus> getReadyTask() {
         DbmetaConnection dbc = new DbmetaConnection();
         try {
             Connection connection = dbc.getConnection();
             List<TaskStatus> waitTasks = new ArrayList<>();
             String sql = "SELECT task_id FROM epcc_mysql_instance_task "
-                    + "WHERE status NOT IN( ? ,  ?) AND task_ready = ?";
+                    + "WHERE  task_ready = ? and status = ?";
             PreparedStatement pst = connection.prepareStatement(sql);
-            pst.setString(1, TaskStatusConsts.FAILED);
-            pst.setString(2, TaskStatusConsts.FINISHED);
-            pst.setInt(3, 1);
+            pst.setInt(1, 1);
+            pst.setString(2, TaskStatusConsts.WAIT);
 
             try (ResultSet rs = pst.executeQuery()) {
                 while (rs.next()) {
@@ -62,18 +61,16 @@ public class DbmetaManager {
         try {
             Connection connection = dbc.getConnection();
             String sql = "SELECT * FROM epcc_mysql_instance_task "
-                    + "WHERE task_id = ? AND status NOT IN( ? , ?)";
+                    + "WHERE task_id = ?";
             pst = connection.prepareStatement(sql);
             pst.setInt(1, taskId);
-            pst.setString(2, TaskStatusConsts.FINISHED);
-            pst.setString(3, TaskStatusConsts.FAILED);
             rs = pst.executeQuery();
             if (rs.next()) {
                 task.setTaskId(rs.getInt("task_id"));
                 task.setStatus(rs.getString("status"));
                 task.setTaskBeginTime(rs.getInt("task_begin_time"));
                 task.setTaskName(rs.getString("task_name"));
-                task.setTaskReady(rs.getString("task_ready"));
+                task.setTaskReady(rs.getInt("task_ready"));
                 task.setIp(rs.getString("ip"));
                 task.setPort(rs.getInt("port"));
                 task.setDataSync(rs.getString("data_sync"));
@@ -149,7 +146,7 @@ public class DbmetaManager {
         return false;
     }
 
-    public boolean updateStatus(int taskId, String status) {
+    public boolean setTaskStatus(int taskId, String status) {
         String sql = null;
         PreparedStatement pst = null;
         DbmetaConnection dbc = new DbmetaConnection();
@@ -161,7 +158,6 @@ public class DbmetaManager {
             pst.setInt(2, taskId);
             int executeUpdate = pst.executeUpdate();
             pst.close();
-            //System.out.println("Change " + taskId + " status " + status);
             if (executeUpdate == 0) {
                 return false;
             }
@@ -174,7 +170,7 @@ public class DbmetaManager {
         return false;
     }
 
-    public boolean updateTaskName(int taskId, String taskName) {
+    public boolean setTaskName(int taskId, String taskName) {
         String sql = null;
         PreparedStatement pst = null;
         DbmetaConnection dbc = new DbmetaConnection();
@@ -198,8 +194,32 @@ public class DbmetaManager {
         }
         return false;
     }
-
-    public boolean updateTaskBeginTime(int taskId) {
+    
+    public boolean setTaskTready(int taskId, int taskReady) {
+        String sql = null;
+        PreparedStatement pst = null;
+        DbmetaConnection dbc = new DbmetaConnection();
+        try {
+            Connection connection = dbc.getConnection();
+            sql = "UPDATE epcc_mysql_instance_task SET task_ready = ? WHERE task_id = ?";
+            pst = connection.prepareStatement(sql);
+            pst.setInt(1, taskReady);
+            pst.setInt(2, taskId);
+            int executeUpdate = pst.executeUpdate();
+            pst.close();
+            if (executeUpdate == 0) {
+                return false;
+            }
+            return true;
+        } catch (SQLException ex) {
+            Logger.getLogger(DbmetaManager.class.getName()).log(Level.SEVERE, null, ex);
+        } finally {
+            dbc.closeConnection();
+        }
+        return false;
+    }
+    
+    public boolean setTaskBeginTime(int taskId) {
         String sql = null;
         PreparedStatement pst = null;
         DbmetaConnection dbc = new DbmetaConnection();

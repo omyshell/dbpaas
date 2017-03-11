@@ -44,6 +44,9 @@ public class DbmetaConnection {
             }
         } catch (ClassNotFoundException | SQLException ex) {
             Logger.getLogger(DbmetaManager.class.getName()).log(Level.SEVERE, null, ex);
+            System.err.println(PropertyCache.getUrl());
+            System.err.println(PropertyCache.getJdbcUser());
+            System.err.println(PropertyCache.getJdbcPsw());
             connection = null;
         }
         return connection;

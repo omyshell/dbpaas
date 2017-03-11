@@ -33,8 +33,8 @@ public class Worker {
         this.exitStatus = 0;
         this.exitInfo = null;
     }
-
-    public String exec() {
+        
+    public int exec() {
         exitInfo = "";
         Session session;
         ChannelExec channel;
@@ -49,30 +49,29 @@ public class Worker {
 
             channel = (ChannelExec) session.openChannel("exec");
             ((ChannelExec) channel).setCommand(command);
-
-            //((ChannelExec) channel).setErrStream(System.err);
+            
+            channel.setInputStream(null);
+            ((ChannelExec)channel).setErrStream(System.err);
+            InputStream in = channel.getInputStream();
             channel.connect();
 
-                        InputStream in = channel.getInputStream();
             BufferedReader reader = new BufferedReader(new InputStreamReader(in));
             String buf;
             while ((buf = reader.readLine()) != null) {
-                 exitInfo += new String(buf.getBytes("UTF-8"), "UTF-8");
+                String line = new String(buf.getBytes("UTF-8"), "UTF-8");
+                exitInfo += line;
+                System.out.println(channel.getExitStatus() + line);
             }
             exitStatus = channel.getExitStatus();
-            System.out.println("exie Status " + exitStatus + " [" + command + "]" + exitInfo);
+            System.out.println("exit Status " + exitStatus + " [" + command + "]" + exitInfo);
             channel.disconnect();
             session.disconnect();
+            return exitStatus;
         } catch (JSchException | IOException e) {
-            exitInfo += e.getMessage();
-            System.err.println("SSH ERROR==>>" + exitInfo);
+            System.err.println("SSH ERROR==>>" + e.getMessage());
             exitStatus = 2;
+            return exitStatus;
         }
-        return exitInfo;
-    }
-
-    public int getExitStatus() {
-        return exitStatus;
     }
 
     public String getExitInfo() {

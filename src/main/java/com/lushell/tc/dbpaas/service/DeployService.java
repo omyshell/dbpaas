@@ -10,6 +10,7 @@ import com.lushell.tc.dbpaas.entity.TaskStatus;
 import com.lushell.tc.dbpaas.executor.ThreadManager;
 import com.lushell.tc.dbpaas.meta.DbmetaManager;
 import com.lushell.tc.dbpaas.task.TaskExecute;
+import com.lushell.tc.dbpaas.utils.TaskStatusConsts;
 import java.util.List;
 
 /**
@@ -18,25 +19,53 @@ import java.util.List;
  */
 public class DeployService {
 
-    public static boolean shutdown = false;
+    private static final int T = 30;
+    private static int sleepTime = T;
     /**
      * @param args the command line arguments
-     * @throws java.lang.InterruptedException
+     * NO LINUX DEAMON AGENT RUNNING，SO EXEC(command) WILL BLOCKING UNTIL END.
      */
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) {
         /**
-         * first we init server cache.
+         * Init server cache.
          */
         PropertyCache.getIstance();
-        List<TaskStatus> waitTask;
+        
+        /**
+         * dba is task manager.
+         */
         DbmetaManager dba = new DbmetaManager();
-        ThreadManager tm = new ThreadManager();
+        
+        /**
+         * pool is thread pool manager.
+         */
+        ThreadManager pool = new ThreadManager();
+
         while (true) {
-            waitTask = dba.getWaitTask();
-            waitTask.stream().forEach((item) -> {
-                tm.submit(new TaskExecute(item.getTaskId()));
+            List<TaskStatus> readyTask = dba.getReadyTask();
+            /*
+            if (readyTask == null || readyTask.isEmpty()) {
+                sleepTime += 10;
+                if (sleepTime > 900) {
+                    sleepTime /= 3;
+                }
+                continue;
+            } else {
+                sleepTime = T;
+            }
+            */
+            readyTask.stream().forEach((task) -> {
+                Integer taskId = task.getTaskId();
+                dba.setTaskStatus(taskId, TaskStatusConsts.WAITING);
+                TaskExecute te = new TaskExecute(taskId);
+                //te.run();
+                pool.submit(te);
             });
-            //Thread.sleep(3*1000);
+/*
+            try {
+                Thread.sleep(sleepTime * 1000);
+            } catch (InterruptedException ex) {
+            }*/
         }
     }
 }
