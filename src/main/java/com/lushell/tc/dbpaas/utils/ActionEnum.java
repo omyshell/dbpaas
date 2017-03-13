@@ -17,7 +17,7 @@ public enum ActionEnum {
      */
     INSTALL_MYSQL_INSTANCE("epcc_instance_install.sh", "check_instance_install.sh", "INSTANCE_INSTALL_OK", 30 * 60),
     INITALIZE_INSTANCE("epcc_instance_init.sh", "check_instance_init.sh", "INSTANCE_INIT_OK", 10 * 60),
-    START_INSTANCE("epcc_instance_start.sh", "check_instance_start.sh", "INSTANCE_START_OK", 5 * 60),
+    START_INSTANCE("epcc_instance_start.sh > /dev/null 2>&1 &", "check_instance_start.sh", "INSTANCE_START_OK", 5 * 60),
     INITALIZE_SYSTEM_USER("epcc_instance_user_init.sh", "", "INIT_USER_OK", 0),
     INSTALL_MASTER_SEMI_SYNC("epcc_install_semi_sync_master.sh", "", "INSTALL_SEMI_SYNC_MASTER_OK", 0),
     SET_MASTER_SEMI_SYNC_ON("epcc_semi_sync_master_start.sh", "", "START_SEMI_SYNC_MASTER_OK", 0),

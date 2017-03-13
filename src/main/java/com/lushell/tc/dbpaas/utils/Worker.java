@@ -53,6 +53,7 @@ public class Worker {
             InputStream in = channel.getInputStream();
             channel.connect();
 
+           // long tStart=System.currentTimeMillis();
             byte[] tmp = new byte[1024];
             while (true) {
                 while (in.available() > 0) {
@@ -62,6 +63,10 @@ public class Worker {
                     }
                     exitInfo += new String(tmp, 0, i);
                 }
+                //long eStart = System.currentTimeMillis();
+               // if ((eStart - tStart) > 900) {
+               //     break;
+               // }
                 if (channel.isClosed()) {
                     if (in.available() > 0) {
                         continue;
