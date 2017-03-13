@@ -13,8 +13,6 @@ import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 import com.lushell.tc.dbpaas.configration.PropertyCache;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 
 /**
  *
@@ -51,25 +49,41 @@ public class Worker {
             ((ChannelExec) channel).setCommand(command);
             System.out.println("[" + command + "]");
             channel.setInputStream(null);
+            ((ChannelExec)channel).setErrStream(System.err);
             InputStream in = channel.getInputStream();
             channel.connect();
 
-            BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-            String buf;
-            while ((buf = reader.readLine()) != null) {
-                String line = new String(buf.getBytes("UTF-8"), "UTF-8");
-                exitInfo += line;
+            byte[] tmp = new byte[1024];
+            while (true) {
+                while (in.available() > 0) {
+                    int i = in.read(tmp, 0, 1024);
+                    if (i < 0) {
+                        break;
+                    }
+                    exitInfo += new String(tmp, 0, i);
+                }
+                if (channel.isClosed()) {
+                    if (in.available() > 0) {
+                        continue;
+                    }
+                    exitStatus = channel.getExitStatus();
+                    System.out.println(exitInfo);
+                    System.out.println("exit-status " + exitStatus);
+                    break;
+                }
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                }
             }
-            exitStatus = channel.getExitStatus();
-            System.out.println("exit Status " + exitStatus + " " + exitInfo);
+
             channel.disconnect();
             session.disconnect();
-            return exitStatus;
         } catch (JSchException | IOException e) {
             System.err.println("SSH ERROR==>>" + e.getMessage());
             exitStatus = 2;
-            return exitStatus;
         }
+        return exitStatus;
     }
 
     public String getExitInfo() {

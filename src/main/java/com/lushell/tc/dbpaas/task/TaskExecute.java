@@ -11,15 +11,12 @@ import com.lushell.tc.dbpaas.meta.DbmetaManager;
 import com.lushell.tc.dbpaas.utils.ActionEnum;
 import com.lushell.tc.dbpaas.utils.TaskStatusConsts;
 import com.lushell.tc.dbpaas.utils.Worker;
-import java.util.logging.Logger;
 
 /**
  *
  * @author tangchao
  */
 public class TaskExecute implements Runnable {
-
-    private static final Logger LOG = Logger.getLogger(TaskExecute.class.getName());
 
     private final int taskId;
 
@@ -31,16 +28,17 @@ public class TaskExecute implements Runnable {
         String command = PropertyCache.getMysqlSrcPath();
         String script = task.getTaskName();
         ActionEnum action = ActionEnum.getBycript(script);
-        String slave = " ";
+        String slave = "";
         if (action.equals(ActionEnum.ADD_SLAVE_TO_MASTER)) {
             slave = slave + " 1 " + task.getMasterIp() + " " + task.getMasterPort();
         }
         
-        command = command + " ./" + script + slave;
+        command = command + " ./" + script + " " + slave;
+        /*
         if (!action.isSyncTask()) {
             command = command + " >/dev/null 2>&1 &";
         }
-
+        */
         return command;
     }
 
@@ -57,13 +55,14 @@ public class TaskExecute implements Runnable {
 
         final DbmetaManager dbm = new DbmetaManager();
 
-        for (int i = 0;i<100;i++) {
+        for (;;) {
            task = dbm.getTaskById(taskId);
             if (task.getTaskReady() == 0) {
                 break;
             }
             status = task.getStatus();
-            System.out.println("==Task ID " + taskId + " " + task.getTaskName() + " " + status);
+            System.out.println("==Task id:" + taskId + ", Status:" + status
+                    + ", Task name:" + task.getTaskName());
             switch (status) {
                 case TaskStatusConsts.RUNNING:
                     worker = new Worker(task.getIp(), getRealExecCommand(task));
@@ -82,23 +81,29 @@ public class TaskExecute implements Runnable {
                             dbm.setTaskName(taskId, action.getScript());
                             dbm.setTaskStatus(taskId, TaskStatusConsts.RUNNING);
                         }
-                        break;
-                    }
-
-                    action = ActionEnum.getBycript(task.getTaskName());
-                    checker = new Worker(task.getIp(), PropertyCache.getMysqlSrcPath()
-                            + " ./" + action.getCheckScript());
-                    checker.exec();
-                    if (action.getOkStatus().equals(checker.getExitInfo())) {
-                        action = PropertyCache.getNextAction(task);
-                        if (action == null) {
-                            dbm.setTaskStatus(taskId, TaskStatusConsts.FINISHED);
-                        } else {
-                            dbm.setTaskName(taskId, action.getScript());
-                            dbm.setTaskStatus(taskId, TaskStatusConsts.RUNNING);
-                        }
                     } else {
-                        dbm.setTaskStatus(taskId, TaskStatusConsts.FAILED);
+                        action = ActionEnum.getBycript(task.getTaskName());
+                        checker = new Worker(task.getIp(), PropertyCache.getMysqlSrcPath()
+                                + " ./" + action.getCheckScript());
+                        checker.exec();
+
+                        String s1 = checker.getExitInfo();
+                        String s2 = action.getOkStatus();
+                        int indexOf = checker.getExitInfo().indexOf("_OK");
+                        int indexOf1 = action.getOkStatus().indexOf("_OK");
+                        String substring = s1.substring(0, indexOf);
+                        String substring1 = s2.substring(0, indexOf1);
+                        if (substring.equalsIgnoreCase(substring1)) {
+                            action = PropertyCache.getNextAction(task);
+                            if (action == null) {
+                                dbm.setTaskStatus(taskId, TaskStatusConsts.FINISHED);
+                            } else {
+                                dbm.setTaskName(taskId, action.getScript());
+                                dbm.setTaskStatus(taskId, TaskStatusConsts.RUNNING);
+                            }
+                        } else {
+                            dbm.setTaskStatus(taskId, TaskStatusConsts.FAILED);
+                        }
                     }
                     break;
                 case TaskStatusConsts.WAITING:
