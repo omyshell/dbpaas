@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns="http://www.springframework.org/schema/beans"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:cache="http://www.springframework.org/schema/cache"
+       xmlns:p="http://www.springframework.org/schema/p"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans 
+     http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+     http://www.springframework.org/schema/mvc
+     http://www.springframework.org/schema/mvc/spring-mvc-4.0.xsd   
+     http://www.springframework.org/schema/aop
+     http://www.springframework.org/schema/aop/spring-aop-4.0.xsd
+     http://www.springframework.org/schema/context
+     http://www.springframework.org/schema/context/spring-context-4.0.xsd
+     http://www.springframework.org/schema/tx
+     http://www.springframework.org/schema/tx/spring-tx-4.0.xsd
+     http://www.springframework.org/schema/cache 
+     http://www.springframework.org/schema/cache/spring-cache-4.0.xsd">
+    
+    <context:component-scan base-package="com.lushell.tc.dbpaas" />		
+    <bean class="org.springframework.web.servlet.mvc.annotation.AnnotationMethodHandlerAdapter"/>
+    
+    <bean class="org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor"/>
+
+    <mvc:annotation-driven />
+    <bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping" />
+
+    <!-- ALLOW SERLET URL RETURN JSON OBJECT -->
+    <bean class="org.springframework.http.converter.json.MappingJacksonHttpMessageConverter"/>  
+
+    <bean id="viewResolver"  class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+        <property name="prefix" value="/WEB-INF/views/"></property>
+        <property name="suffix" value=".jsp"></property>
+    </bean>
+
+    <context:property-placeholder location="classpath*:*/jdbc.properties" />
+    
+    <bean id="resourcePoolDataSource" class="com.alibaba.druid.pool.DruidDataSource" destroy-method="close">
+        <property name="url" value="${jdbc.url}" />
+        <property name="username" value="${jdbc.username}" />
+        <property name="password" value="${jdbc.password}" />
+        <property name="maxActive" value="20" />
+        <property name="initialSize" value="1" />
+        <property name="maxWait" value="60000" />
+        <property name="minIdle" value="1" />
+        <property name="timeBetweenEvictionRunsMillis" value="3000" />
+        <property name="minEvictableIdleTimeMillis" value="300000" />
+        <property name="validationQuery" value="SELECT 'x' FROM DUAL" />
+        <property name="testWhileIdle" value="true" />
+        <property name="testOnBorrow" value="false" />
+        <property name="testOnReturn" value="false" />
+        <property name="filters" value="stat" />
+    </bean>
+    
+    <bean id="clusterManagerDataSource" class="com.alibaba.druid.pool.DruidDataSource" destroy-method="close">
+        <property name="url" value="${cm.jdbc.url}" />
+        <property name="username" value="${cm.jdbc.username}" />
+        <property name="password" value="${cm.jdbc.password}" />
+        <property name="maxActive" value="20" />
+        <property name="initialSize" value="1" />
+        <property name="maxWait" value="60000" />
+        <property name="minIdle" value="1" />
+        <property name="timeBetweenEvictionRunsMillis" value="3000" />
+        <property name="minEvictableIdleTimeMillis" value="300000" />
+        <property name="validationQuery" value="SELECT 'x' FROM DUAL" />
+        <property name="testWhileIdle" value="true" />
+        <property name="testOnBorrow" value="false" />
+        <property name="testOnReturn" value="false" />
+        <property name="filters" value="stat" />
+    </bean>
+    
+    <bean id="dataSource" class="com.lushell.tc.dbpaas.utils.DynamicDataSource">  
+        <property name="targetDataSources"> 
+            <map key-type="java.lang.String">  
+                <entry value-ref="clusterManagerDataSource" key="clusterManagerDataSource"></entry>  
+                <entry value-ref="resourcePoolDataSource" key="resourcePoolDataSource"></entry>  
+            </map>  
+        </property>  
+        <property name="defaultTargetDataSource" ref="resourcePoolDataSource"></property>  
+    </bean>  
+    
+    <bean id="sessionFactory" class="org.springframework.orm.hibernate4.LocalSessionFactoryBean">
+        <property name="dataSource" ref="dataSource" />
+        <property name="configLocation" value="classpath:/META-INF/hibernate.cfg.xml" />
+        <property name="packagesToScan" value="com.lushell.tc.dbpaas" />
+    </bean>
+      
+    <bean id="transactionManager" class="org.springframework.orm.hibernate4.HibernateTransactionManager">
+        <property name="sessionFactory" ref="sessionFactory" />
+    </bean>
+    
+    <bean id="dataSourceExchange"  class="com.lushell.tc.dbpaas.utils.DataSourceAspect"></bean>
+    
+    <tx:advice id="txAdvice" transaction-manager="transactionManager">
+        <tx:attributes>
+            <tx:method name="*" propagation="REQUIRED" rollback-for="java.lang.Exception" />
+            <tx:method name="create*" propagation="REQUIRED" />
+            <tx:method name="save*" propagation="REQUIRED" />
+            <tx:method name="add*" propagation="REQUIRED" />
+            <tx:method name="update*" propagation="REQUIRED" />
+            <tx:method name="remove*" propagation="REQUIRED" />
+            <tx:method name="del*" propagation="REQUIRED" />
+            <tx:method name="import*" propagation="REQUIRED" />
+            <tx:method name="*" propagation="NOT_SUPPORTED" read-only="true" />
+        </tx:attributes>
+    </tx:advice>
+
+    <aop:aspectj-autoproxy></aop:aspectj-autoproxy>
+    <aop:config>
+        <aop:aspect id="c" ref="dataSourceExchange">
+            <aop:pointcut id="tx" 
+            expression="execution(* com.lushell.tc.dbpaas.*.*.service.*ServiceImpl.*(..))"/>
+            <aop:before pointcut-ref="tx" method="before"/>
+        </aop:aspect>
+    </aop:config>
+
+    <tx:annotation-driven transaction-manager="transactionManager"/>
+</beans>
