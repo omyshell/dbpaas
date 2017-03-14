@@ -3,8 +3,9 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.lushell.tc.dbpaas.openapi.instance.service;
+package com.lushell.tc.dbpaas.api.instance.service;
 
+import com.alibaba.fastjson.JSONObject;
 import com.lushell.tc.dbpaas.utils.DataSource;
 
 /**
@@ -13,5 +14,5 @@ import com.lushell.tc.dbpaas.utils.DataSource;
  */
 public interface InstanceService {
     @DataSource(name=DataSource.RS)
-    public String getTask(int taskId);
+    public JSONObject getTask(int taskId);
 }

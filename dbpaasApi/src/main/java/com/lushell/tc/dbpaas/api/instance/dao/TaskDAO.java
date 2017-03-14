@@ -3,9 +3,10 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.lushell.tc.dbpaas.openapi.instance.dao;
+package com.lushell.tc.dbpaas.api.instance.dao;
 
-import com.lushell.tc.dbpaas.openapi.instance.entity.TaskDO;
+import com.lushell.tc.dbpaas.api.instance.entity.TaskDO;
+import java.util.List;
 
 /**
  *
@@ -13,7 +14,9 @@ import com.lushell.tc.dbpaas.openapi.instance.entity.TaskDO;
  */
 public interface TaskDAO {
 
+    public List<TaskDO> getAllTask();
+
     public TaskDO getTask(int taskId);
 
-    public int startTask(int taskId);
+    public boolean setTaskReady(int taskId, int ready);
 }

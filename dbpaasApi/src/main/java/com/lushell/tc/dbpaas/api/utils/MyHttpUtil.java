@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.lushell.tc.dbpaas.openapi.utils;
+package com.lushell.tc.dbpaas.api.utils;
 
 
 import java.io.IOException;
