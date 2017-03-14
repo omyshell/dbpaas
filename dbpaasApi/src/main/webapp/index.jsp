@@ -8,7 +8,4 @@
         <title>CC</title>
     </head>
     <%response.sendRedirect("api/task/getTask");%>
-    <body>
-        hello
-    </body>
 </html>
