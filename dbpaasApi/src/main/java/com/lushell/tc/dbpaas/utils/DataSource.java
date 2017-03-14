@@ -6,9 +6,9 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 public @interface DataSource {
-    String name() default DataSource.TEST_CASE;
+    String name() default DataSource.RS;
 
-    public final static String TEST_CASE	= "tcDataSource";
-    public final static String DBMETA           = "dbmetaDataSource";
+    public final static String RS	= "resourcePoolDataSource";
+    public final static String CM           = "clusterManagerDataSource";
  
 }

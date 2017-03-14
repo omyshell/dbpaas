@@ -47,13 +47,13 @@ public class TestServiceImpl implements TestService {
         }
     }
 
-    @DataSource(name=DataSource.TEST_CASE)
+    @DataSource(name=DataSource.RS)
     @Override
     public List<TestCaseDO> getAllTestCase(String enviroment) {
         return testDao.getTestCaseByEnviroment(getEnviroment(enviroment));
     }
 
-    @DataSource(name = DataSource.TEST_CASE)
+    @DataSource(name = DataSource.RS)
     @Override
     public List<JSONObject> getAllEnviroment() {
         List<EnviromentDO> list = testDao.getAllEnviroment();
@@ -68,7 +68,7 @@ public class TestServiceImpl implements TestService {
         return data;
     }
 
-    @DataSource(name=DataSource.TEST_CASE)
+    @DataSource(name=DataSource.RS)
     @Override
     public List<String> createTestCase(String enviroment, String apiName, String api) {
         TestCaseDO object;  
@@ -80,7 +80,7 @@ public class TestServiceImpl implements TestService {
         return getApiNameForEnviroment(getEnviroment(enviroment));
     }
     
-    @DataSource(name=DataSource.TEST_CASE)
+    @DataSource(name=DataSource.RS)
     @Override
     public List<TestData> executeCc(String enviroment) {
         List<TestData> list;
@@ -113,7 +113,7 @@ public class TestServiceImpl implements TestService {
         return list;
     }
 
-    @DataSource(name=DataSource.TEST_CASE)
+    @DataSource(name=DataSource.RS)
     @Override
     public List<String> getApiNameForEnviroment(String enviroment) {
         List<String> list;
@@ -128,7 +128,7 @@ public class TestServiceImpl implements TestService {
         return list;
     }
 
-    @DataSource(name=DataSource.TEST_CASE)
+    @DataSource(name=DataSource.RS)
     @Override
     public void deleteById(Integer id, List<TestData> testExampleCache) {
         testDao.delete(TestCaseDO.class, id);
@@ -142,7 +142,7 @@ public class TestServiceImpl implements TestService {
         }
     }
 
-    @DataSource(name=DataSource.TEST_CASE)
+    @DataSource(name=DataSource.RS)
     @Override
     public void modifyApiExample(Integer id, List<TestData> testExampleCache) {
         TestCaseDO api;

@@ -16,18 +16,18 @@ import com.lushell.tc.dbpaas.utils.DataSource;
  * @author tangchao
  */
 public interface TestService {
-    @DataSource(name=DataSource.TEST_CASE)
+    @DataSource(name=DataSource.RS)
     public List<String> createTestCase(String enviroment, String apiName, String api);
-    @DataSource(name=DataSource.TEST_CASE)
+    @DataSource(name=DataSource.RS)
     public void modifyApiExample(Integer id,  List<TestData> testExampleCache);
-    @DataSource(name=DataSource.TEST_CASE)
+    @DataSource(name=DataSource.RS)
     public List<TestCaseDO> getAllTestCase(String enviroment);
-    @DataSource(name=DataSource.TEST_CASE)
+    @DataSource(name=DataSource.RS)
     public List<JSONObject>  getAllEnviroment();
-    @DataSource(name=DataSource.TEST_CASE)
+    @DataSource(name=DataSource.RS)
     public List<TestData> executeCc(String enviroment);
-    @DataSource(name=DataSource.TEST_CASE)
+    @DataSource(name=DataSource.RS)
     public List<String> getApiNameForEnviroment(String enviroment);
-    @DataSource(name=DataSource.TEST_CASE)
+    @DataSource(name=DataSource.RS)
     public void deleteById(Integer id, List<TestData> testExampleCache);
 }
