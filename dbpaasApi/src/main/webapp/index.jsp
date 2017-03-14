@@ -7,6 +7,8 @@
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title>CC</title>
     </head>
-    <%response.sendRedirect("test/index");%>
-
+    <%response.sendRedirect("api/task/getTask");%>
+    <body>
+        hello
+    </body>
 </html>
